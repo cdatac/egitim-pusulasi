@@ -21,6 +21,8 @@ K12 otomatik bağlayıcısı gerçek oturum çağrıları doğrulanana kadar kap
 - Birden çok iletiyi `---` satırıyla ayırabilirsiniz.
 - İçe aktarmadan önce metinde doğru çocuğa ait bilgi bulunduğunu kontrol edin.
 
+Parola ve oturum bilgisi içermeyen uyumlu bir K12 bildirim dışa aktarımınız varsa **Bildirim dosyası seç (.json)** düğmesini kullanabilirsiniz. Dosya en fazla 1 MB ve en fazla 250 bildirim içerebilir. Uygulama `title`, `message`/`body`, gönderen ve alınma zamanını işler; K12'nin uygulama içi yönlendirme alanlarını saklamaz. Dosyayı seçmeden önce doğru çocuk profilinin etkin olduğundan emin olun.
+
 Eklenen içerik hemen yerel kurallarla sınıflandırılır. Özgün metin kartın içinde korunur; özetin hatalı göründüğü durumlarda kaynak metni esas alın.
 
 ## 3. Çocuk profilleri

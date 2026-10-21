@@ -1,3 +1,5 @@
+import { MAX_NOTIFICATION_EXPORT_BYTES, parseNotificationExportText } from "./import-utils.js";
+
 const $ = selector => document.querySelector(selector);
 const feed = $("#feed");
 let messages = [];
@@ -117,6 +119,31 @@ $("#import").addEventListener("click", async () => {
 
 $("#demo").addEventListener("click", () => {
   $("#import-text").value = `Fen Bilimleri Projesi\nÖğrencilerimizin 23.10.2026 Cuma gününe kadar projelerini teslim etmeleri gerekmektedir. Karton, pil ve LED getiriniz.\n---\nVeli Toplantısı\nÖnemli: Yarın saat 18.30'da çevrim içi veli toplantısı yapılacaktır.`;
+});
+
+$("#notification-file-button").addEventListener("click", () => $("#notification-file").click());
+
+$("#notification-file").addEventListener("change", async event => {
+  const [file] = event.target.files;
+  if (!file) return;
+  const feedback = $("#feedback");
+  try {
+    if (file.size > MAX_NOTIFICATION_EXPORT_BYTES) throw new Error("Bildirim dosyası en fazla 1 MB olabilir.");
+    const records = parseNotificationExportText(await file.text());
+    feedback.textContent = "Bildirimler güvenli biçimde içe aktarılıyor…";
+    const response = await fetch("/api/connectors/k12/notifications/import", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ profileId: activeProfileId, records })
+    });
+    const result = await response.json();
+    feedback.textContent = response.ok ? `${result.imported} K12 bildirimi eklendi` : result.error;
+    if (response.ok) await refresh();
+  } catch (error) {
+    feedback.textContent = error instanceof SyntaxError ? "Bildirim dosyası geçerli JSON değil." : error.message;
+  } finally {
+    event.target.value = "";
+  }
 });
 
 let timer;
