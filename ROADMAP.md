@@ -51,7 +51,8 @@
 
 ### 3. Herkes için dağıtım
 
-- [ ] Windows/macOS/Linux için kolay çalıştırma
+- [x] Windows çift tıklama ve macOS/Linux tek komut başlatıcısı
+- [ ] Node.js gerektirmeyen imzalı masaüstü paketleri
 - [ ] Güvenli Docker Compose seçeneği (yapılandırma doğrulandı; gerçek imaj derlemesi Docker motoru bekliyor)
 - [x] Başlangıç ortamı denetleyicisi
 - [ ] İlk kurulum sihirbazı

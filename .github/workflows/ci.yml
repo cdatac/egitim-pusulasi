@@ -22,4 +22,5 @@ jobs:
       - run: npm install --ignore-scripts
       - run: npm run check
       - run: npm test
+      - run: sh -n start.sh
       - run: npm run audit:release

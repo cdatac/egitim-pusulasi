@@ -6,6 +6,26 @@ K12 duyuru ve mesajlarını yerel olarak saklayan, özetleyen ve yapılacak iş/
 
 Node.js 24 veya üzeri gerekir. Ek paket kurulumu yoktur.
 
+### Windows — çift tıklama
+
+1. Proje klasöründeki `Egitim-Pusulasi-Baslat.cmd` dosyasına çift tıklayın.
+2. Başlatıcı ortamı denetler, yerel sunucuyu açar ve hazır olduğunda tarayıcıyı getirir.
+3. Uygulamayı durdurmak için açılan komut penceresinde `Ctrl+C` tuşlarına basın.
+
+Başlatıcı İnternet'ten yazılım indirmez. Node.js eksikse yalnızca resmî indirme adresini gösterir.
+
+Ayrıntılı kurulum, güncelleme, yedekleme ve kaldırma adımları için [docs/INSTALL.md](docs/INSTALL.md) belgesine bakın.
+
+### macOS veya Linux
+
+```sh
+sh start.sh
+```
+
+Tarayıcıyı otomatik açmadan başlatmak için `node scripts/launch.mjs --no-browser` kullanılabilir.
+
+### Geliştirici kullanımı
+
 ```powershell
 npm start
 ```
