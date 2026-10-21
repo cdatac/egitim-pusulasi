@@ -59,3 +59,31 @@ test("kullanıcının özel ifadelerini büyük-küçük harf ve noktalama güve
   assert.doesNotMatch(JSON.stringify(preview.prepared), /Ada|ADA/);
   assert.match(preview.prepared.body, /ÖZEL İFADE MASKELENDİ/);
 });
+
+test("Türkçe karakterli sınırlarla tüm eğitim kategorilerini çıkarır", () => {
+  const cases = [
+    ["Sınav", "Matematik yazılısına çalışınız."],
+    ["Ödev", "Türkçe ödevini yarın teslim ediniz."],
+    ["Etkinlik", "Çarşamba günü müze gezisine katılınız."],
+    ["Devamsızlık", "Öğrencimizin devamsızlık kaydı bulunmaktadır."],
+    ["Ödeme", "Servis ücretini bugün ödeyiniz."],
+    ["Malzeme", "Çantasında boya malzemelerini getirsin."]
+  ];
+  for (const [category, body] of cases) assert.equal(analyzeLocally({ title: "Bilgi", body }).category, category, body);
+});
+
+test("Türkçe gün, öncelik ve eylem köklerini ekleriyle tanır", () => {
+  const result = analyzeLocally({
+    title: "Önemlidir",
+    body: "Çarşamba günü etkinliğe katılınız ve servis ücretini ödeyiniz."
+  });
+  assert.equal(result.priority, "yüksek");
+  assert.deepEqual(result.dates.map(item => item.value), ["Çarşamba"]);
+  assert.deepEqual(result.actionItems.map(item => item.text), ["Çarşamba günü etkinliğe katılınız ve servis ücretini ödeyiniz."]);
+});
+
+test("ödev sözcüğünü ödeme eylemi olarak yorumlamaz", () => {
+  const result = analyzeLocally({ title: "Matematik ödevi", body: "Konu tekrarı yapılacaktır." });
+  assert.equal(result.category, "Ödev");
+  assert.deepEqual(result.actionItems, []);
+});

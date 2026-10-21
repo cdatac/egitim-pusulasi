@@ -42,7 +42,7 @@
 
 - [x] Kaynaklı günlük/haftalık özet
 - [x] Ebeveyn kontrollü açık/tamamlandı görev takibi
-- [ ] Ödev, sınav, etkinlik, ödeme ve malzeme çıkarma
+- [x] Ödev, sınav, etkinlik, devamsızlık, ödeme ve malzeme çıkarma
 - [x] Takvim dışa aktarma
 - [ ] Mesajlar üzerinde kaynaklı soru-cevap
 - [ ] Bulut AI ve yerel model seçenekleri
