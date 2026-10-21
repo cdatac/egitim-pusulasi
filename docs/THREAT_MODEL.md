@@ -32,7 +32,8 @@ Tarayıcı ile yerel API aynı `127.0.0.1` kökenindedir. Bağlayıcı sınırı
 | --- | --- | --- |
 | Kötü niyetli web sayfasının yerel API'ye istek göndermesi | Host/Origin doğrulaması, yalnızca localhost dinleme, CSP | Aynı kullanıcı hesabındaki kötü amaçlı yerel yazılım bu sınıra dahil değildir |
 | Okul kimlik bilgilerinin kaydedilmesi veya Git'e girmesi | Bağlayıcı sözleşmesinde sır alanlarının reddi, `.gitignore`, geçmişi tarayan yayın denetimi | Yeni ve beklenmeyen sır biçimleri elle inceleme gerektirebilir |
-| Çocuk verisinin izinsiz AI servisine gönderilmesi | AI varsayılan kapalı, ileti başına açık onay, gönderim önizlemesi | Kullanıcının seçtiği sağlayıcının saklama koşulları ayrıca değerlendirilmelidir |
+| Çocuk verisinin izinsiz AI servisine gönderilmesi | AI varsayılan kapalı, ileti ve soru başına açık onay, yerel kaynak seçimi, gönderim önizlemesi | Kullanıcının seçtiği sağlayıcının saklama koşulları ayrıca değerlendirilmelidir |
+| AI yanıtının ilgisiz veya uydurma kaynağa atıf yapması | Dönen kimlikleri yalnızca gerçekten gönderilen en fazla beş iletiyle sınırlandırma ve kaynak karta geri bağlantı | Kaynağın doğru yorumlandığını ebeveyn yine doğrulamalıdır |
 | Gereksiz kişisel bilginin buluta gitmesi | E-posta/telefon maskeleme, profil adını göndermeme, profil bazlı kullanıcı maskeleme listesi | Kullanıcının listeye eklemediği dolaylı tanımlayıcılar otomatik tanınmayabilir |
 | Profiller arası veri karışması | Sorgu, pano, içe aktarma ve silmede profil kimliği doğrulaması; API testleri | Bilgisayar hesabını paylaşan kişiler aynı yerel uygulamaya erişebilir |
 | Bağlayıcının okul sisteminde değişiklik yapması | Salt okunur sözleşme ve ürün ilkesi | Gerçek uç noktalar doğrulanana kadar K12 ağ bağlayıcısı etkin değildir |

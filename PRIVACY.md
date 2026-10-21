@@ -16,6 +16,8 @@ Kullanıcı `AI_API_URL`, `AI_API_KEY` ve `AI_MODEL` değişkenlerini kendisi ay
 
 Arayüz, gönderilecek alanları, yaklaşık karakter sayısını, maskeleme durumunu ve etkin özel ifade sayısını çağrıdan önce gösterir. Özel maskeleme listesi yalnızca yerel veritabanında tutulur ve AI servisine liste olarak gönderilmez; yalnızca maskelenmiş metin gönderilir.
 
+Kaynaklı soru-cevapta ilgili iletiler önce cihazda seçilir ve en fazla beş ileti kullanılır. Soru, seçilen ileti başlıkları, gönderilecek alanlar ve yaklaşık karakter sayısı kullanıcıya gösterilir. Onaylanan kaynak kimlikleri isteğe sabitlenir ve aynı çocuk profiline ait oldukları sunucuda yeniden doğrulanır. Ayrı onay verilmeden soru veya kaynak içerikleri AI servisine gönderilmez. AI tarafından döndürülen kaynak kimlikleri, yalnızca gerçekten gönderilen iletilerin kimlikleriyle sınırlandırılır.
+
 ## Toplanmayan veriler
 
 Proje telemetri, reklam tanımlayıcısı veya davranışsal profil toplamaz. Proje geliştiricileri kullanıcının yerel veritabanına erişemez.

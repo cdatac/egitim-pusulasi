@@ -48,6 +48,20 @@
         <div id="digest-content" aria-live="polite"></div>
       </section>
 
+      <section class="panel qa" aria-labelledby="qa-title">
+        <div>
+          <p class="eyebrow">KAYNAKLI SORU-CEVAP</p>
+          <h2 id="qa-title">Okul iletilerine soru sor</h2>
+          <p id="qa-help">İlgili iletiler önce bu cihazda seçilir. Gönderilecek kapsamı görüp onaylamadan AI servisine veri gönderilmez.</p>
+        </div>
+        <div class="qa-controls">
+          <label class="sr-only" for="qa-question">Okul iletileri hakkındaki soru</label>
+          <input id="qa-question" type="text" maxlength="500" aria-describedby="qa-help" placeholder="Örneğin: Bu hafta teslim edilecek ödev var mı?">
+          <button id="qa-ask" disabled>Kaynakları bul ve sor</button>
+        </div>
+        <div id="qa-result" role="status" aria-live="polite"></div>
+      </section>
+
       <section class="panel composer">
         <div>
           <p class="eyebrow">HIZLI İÇE AKTAR</p>

@@ -73,6 +73,8 @@ async function refresh(q = "") {
   ]);
   aiConfigured = health.aiConfigured;
   $("#ai-state").textContent = health.aiConfigured ? "AI hazır · onaylı" : "Yerel analiz";
+  $("#qa-ask").disabled = !health.aiConfigured;
+  $("#qa-ask").title = health.aiConfigured ? "" : "Soru-cevap için isteğe bağlı AI servisi yapılandırılmalıdır";
   $("#total").textContent = dashboard.total;
   $("#urgent").textContent = dashboard.urgent;
   $("#tasks").textContent = dashboard.taskCount;
@@ -174,6 +176,67 @@ $("#redactions").addEventListener("click", async () => {
   const result = await response.json();
   if (!response.ok) return alert(result.error ?? "Maskeleme listesi kaydedilemedi.");
   alert(`${result.terms.length} özel maskeleme ifadesi yalnızca bu cihazda kaydedildi.`);
+});
+
+$("#qa-ask").addEventListener("click", async () => {
+  const question = $("#qa-question").value.trim();
+  const resultBox = $("#qa-result");
+  if (question.length < 3) return alert("Lütfen en az 3 karakterlik bir soru yazın.");
+  resultBox.textContent = "İlgili kaynaklar cihazda aranıyor…";
+  const previewResponse = await fetch("/api/qa/preview", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ profileId: activeProfileId, question })
+  });
+  const preview = await previewResponse.json();
+  if (!previewResponse.ok) {
+    resultBox.textContent = preview.error ?? "Kaynaklar bulunamadı.";
+    return;
+  }
+  if (!preview.sourceCount) {
+    resultBox.textContent = "Bu soruyla ilgili kaynak ileti bulunamadı; AI servisine veri gönderilmedi.";
+    return;
+  }
+  if (!preview.providerConfigured) {
+    resultBox.textContent = "İlgili kaynaklar bulundu ancak AI servisi yapılandırılmamış; veri gönderilmedi.";
+    return;
+  }
+  const masking = preview.redactionEnabled
+    ? `E-posta/telefon ve ${preview.customRedactionTerms} özel ifade maskelenecek.`
+    : "Maskeleme kapalı.";
+  const sourceList = preview.sources.map(source => `• #${source.id} ${source.title.slice(0, 100)}`).join("\n");
+  const accepted = confirm(`Soru ile seçilen iletilerin kimliği, başlığı, tarihi ve en fazla 3000 karakterlik gövdesi AI servisine gönderilecek. ${masking}\n\nKaynaklar:\n${sourceList}\n\nYaklaşık ${preview.characters} karakter gönderilecek. Devam edilsin mi?`);
+  if (!accepted) {
+    resultBox.textContent = "Gönderim iptal edildi; AI servisine veri gönderilmedi.";
+    return;
+  }
+  $("#qa-ask").disabled = true;
+  resultBox.textContent = "Kaynaklı yanıt hazırlanıyor…";
+  const response = await fetch("/api/qa", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ profileId: activeProfileId, question, sourceIds: preview.sources.map(source => source.id), consent: true })
+  });
+  const result = await response.json();
+  $("#qa-ask").disabled = !aiConfigured;
+  if (!response.ok) {
+    resultBox.textContent = result.error ?? "Yanıt hazırlanamadı.";
+    return;
+  }
+  const sources = result.sources.map(source => `<a class="qa-source" href="#message-${source.id}" data-message-id="${source.id}">#${source.id} ${esc(source.title)}</a>`).join("");
+  resultBox.innerHTML = `<div class="qa-answer"><strong>Yanıt</strong><p>${esc(result.answer || "Kaynaklarda yeterli yanıt bulunamadı.")}</p>${result.uncertainty ? `<p class="qa-uncertainty"><strong>Belirsizlik:</strong> ${esc(result.uncertainty)}</p>` : ""}<div class="qa-sources"><strong>Kullanılan kaynaklar</strong>${sources || "<span>AI doğrulanabilir bir kaynak kimliği döndürmedi.</span>"}</div></div>`;
+});
+
+$("#qa-result").addEventListener("click", async event => {
+  const link = event.target.closest(".qa-source");
+  if (!link) return;
+  event.preventDefault();
+  const targetId = `message-${link.dataset.messageId}`;
+  if (!document.getElementById(targetId)) {
+    $("#search").value = "";
+    await refresh();
+  }
+  document.getElementById(targetId)?.scrollIntoView({ block: "center" });
 });
 
 feed.addEventListener("click", async event => {

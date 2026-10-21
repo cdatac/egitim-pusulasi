@@ -74,6 +74,7 @@ API anahtarı veritabanına veya tarayıcıya yazılmaz. AI servisi etkin olsa b
 - Tek iletiyi veya seçili profile ait tüm yerel veriyi silme
 - İsteğe bağlı AI servis bağlantısı
 - Profil bazında, kullanıcı yönetimli ad ve özel ifade maskelemesi
+- En fazla beş yerel kaynak seçen, açık onaylı ve kaynak kimlikli AI soru-cevap
 
 K12 otomatik bağlayıcısı, oturum açılmış ağ çağrıları doğrulandıktan sonra eklenecektir. Uygulama K12 parolasını saklamaz.
 

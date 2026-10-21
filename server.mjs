@@ -9,6 +9,7 @@ import { analyzeMessage, cloudAiPreview, isCloudAiConfigured } from "./lib/analy
 import { ConnectorValidationError, connectorDescriptors, normalizeConnectorItems } from "./lib/connectors/contract.mjs";
 import { buildDigest, DigestValidationError } from "./lib/digest.mjs";
 import { buildCalendar } from "./lib/calendar.mjs";
+import { answerQuestion, buildQuestionPreview, QaValidationError } from "./lib/qa.mjs";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(ROOT, "data");
@@ -276,6 +277,38 @@ async function api(req, res, url) {
   if (req.method === "GET" && url.pathname === "/api/connectors") {
     return json(res, 200, connectorDescriptors);
   }
+  if (req.method === "POST" && url.pathname === "/api/qa/preview") {
+    const payload = await bodyJson(req);
+    const profileId = resolveProfileId(payload.profileId);
+    const messages = db.prepare(`${selectSql} WHERE m.profile_id = ? ORDER BY COALESCE(m.occurred_at, m.created_at) DESC`).all(profileId).map(rowToMessage);
+    const preview = buildQuestionPreview(payload.question, messages, {
+      redactTerms: getRedactionTerms(profileId),
+      redactionEnabled: process.env.AI_REDACT !== "false"
+    });
+    return json(res, 200, {
+      providerConfigured: isCloudAiConfigured(),
+      redactionEnabled: preview.redactionEnabled,
+      customRedactionTerms: preview.customRedactionTerms,
+      fields: preview.fields,
+      characters: preview.characters,
+      sourceCount: preview.sources.length,
+      sources: preview.sources
+    });
+  }
+  if (req.method === "POST" && url.pathname === "/api/qa") {
+    const payload = await bodyJson(req);
+    if (payload.consent !== true) return json(res, 400, { error: "Soru için açık AI gönderim onayı gerekli" });
+    if (!isCloudAiConfigured()) return json(res, 409, { error: "Bulut AI servisi yapılandırılmamış" });
+    const profileId = resolveProfileId(payload.profileId);
+    if (!Array.isArray(payload.sourceIds) || payload.sourceIds.length < 1 || payload.sourceIds.length > 5) throw new QaValidationError("Onaylanan kaynak listesi 1-5 ileti içermelidir");
+    const sourceIds = [...new Set(payload.sourceIds.map(Number))];
+    if (sourceIds.length !== payload.sourceIds.length || sourceIds.some(id => !Number.isInteger(id) || id < 1)) throw new QaValidationError("Onaylanan kaynak kimlikleri geçersiz");
+    const placeholders = sourceIds.map(() => "?").join(",");
+    const messages = db.prepare(`${selectSql} WHERE m.profile_id = ? AND m.id IN (${placeholders}) ORDER BY COALESCE(m.occurred_at, m.created_at) DESC`).all(profileId, ...sourceIds).map(rowToMessage);
+    if (messages.length !== sourceIds.length) throw new QaValidationError("Onaylanan kaynaklardan biri bu çocuk profiline ait değil");
+    const result = await answerQuestion(payload.question, messages, { redactTerms: getRedactionTerms(profileId) });
+    return json(res, 200, result);
+  }
   if (req.method === "GET" && url.pathname === "/api/export") {
     const items = db.prepare(`${selectSql} ORDER BY COALESCE(m.occurred_at, m.created_at) DESC`).all().map(rowToMessage);
     return json(res, 200, {
@@ -430,7 +463,7 @@ const server = http.createServer(async (req, res) => {
     });
     res.end(data);
   } catch (error) {
-    if (error instanceof ProfileValidationError || error instanceof DigestValidationError) return json(res, 400, { error: error.message });
+    if (error instanceof ProfileValidationError || error instanceof DigestValidationError || error instanceof QaValidationError) return json(res, 400, { error: error.message });
     json(res, 500, { error: error.message });
   }
 });

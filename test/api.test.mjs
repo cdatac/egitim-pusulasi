@@ -185,15 +185,21 @@ test("bulut AI yapılandırılsa bile yalnızca ileti başına onaylı çağrıd
     const payload = JSON.parse(Buffer.concat(chunks).toString("utf8"));
     calls += 1;
     receivedInput = payload.input;
-    const body = JSON.stringify({
-      output_text: JSON.stringify({
+    const sourceId = Number(payload.input.match(/ID: (\d+)/)?.[1]);
+    const output = payload.input.includes("KAYNAKLAR:") ? {
+      answer: "İletişim duyurusundaki numara kullanılmalıdır.",
+      citations: [sourceId, 999999],
+      uncertainty: ""
+    } : {
         summary: "Maskeli ileti özeti",
         category: "Duyuru",
         priority: "normal",
         actionItems: [],
         dates: [],
         confidence: 0.9
-      })
+      };
+    const body = JSON.stringify({
+      output_text: JSON.stringify(output)
     });
     res.writeHead(200, { "content-type": "application/json" });
     res.end(body);
@@ -248,6 +254,45 @@ test("bulut AI yapılandırılsa bile yalnızca ileti başına onaylı çağrıd
   assert.doesNotMatch(receivedInput, /ogretmen@example\.com|0532 123 45 67|Deniz/i);
   assert.doesNotMatch(receivedInput, /Çocuğum/);
   assert.match(receivedInput, /E-POSTA MASKELENDİ|TELEFON MASKELENDİ/);
+
+  const question = "Deniz için iletişim detayı nedir?";
+  const qaPreview = await fetch(`${app.base}/api/qa/preview`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ profileId: profile.id, question })
+  }).then(response => response.json());
+  assert.equal(qaPreview.sourceCount, 1);
+  assert.equal(qaPreview.sources[0].id, id);
+  assert.equal(qaPreview.customRedactionTerms, 1);
+  assert.equal(calls, 1);
+
+  const denied = await fetch(`${app.base}/api/qa`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ profileId: profile.id, question, consent: false })
+  });
+  assert.equal(denied.status, 400);
+  assert.equal(calls, 1);
+
+  const foreignSource = await fetch(`${app.base}/api/qa`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ profileId: profile.id, question, sourceIds: [999999], consent: true })
+  });
+  assert.equal(foreignSource.status, 400);
+  assert.equal(calls, 1);
+
+  const answer = await fetch(`${app.base}/api/qa`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ profileId: profile.id, question, sourceIds: qaPreview.sources.map(source => source.id), consent: true })
+  }).then(response => response.json());
+  assert.equal(calls, 2);
+  assert.equal(answer.provider, "yapay-zeka-maskeli");
+  assert.deepEqual(answer.citations, [id]);
+  assert.deepEqual(answer.sources.map(source => source.id), [id]);
+  assert.doesNotMatch(receivedInput, /Deniz|0532 123 45 67|Çocuğum/i);
+  assert.match(receivedInput, /ÖZEL İFADE MASKELENDİ|TELEFON MASKELENDİ/);
 });
 
 test("K12 bağlayıcı sözleşmesi kayıtları içe aktarır, tekrarları ayıklar ve sırları reddeder", async t => {
