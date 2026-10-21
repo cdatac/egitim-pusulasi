@@ -49,6 +49,8 @@ docker compose up --build
 
 Ardından yine `http://127.0.0.1:4173` adresini açın. Compose yapılandırması portu yalnızca localhost'a bağlar ve verileri adlandırılmış bir Docker volume içinde tutar.
 
+Hostta `4173` kullanımdaysa `APP_PORT` değişkeniyle farklı bir localhost portu seçilebilir; konteyner içi port ve güvenli bağlama değişmez.
+
 Varsayılan durumda içerik bilgisayardan çıkmaz; yerel Türkçe kurallarla sınıflandırılır. Uzak yapay zekâ bağlantısı ayrıca ve yalnızca süreç ortamında yapılandırılır:
 
 ```powershell

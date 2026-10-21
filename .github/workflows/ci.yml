@@ -24,3 +24,39 @@ jobs:
       - run: npm test
       - run: sh -n start.sh
       - run: npm run audit:release
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate and smoke-test hardened image
+        env:
+          APP_PORT: "4273"
+        run: |
+          set -euo pipefail
+          project="egitim-pusulasi-ci"
+          cleanup() {
+            status=$?
+            trap - EXIT
+            if [ "$status" -ne 0 ]; then docker compose -p "$project" logs --no-color || true; fi
+            docker compose -p "$project" down -v --remove-orphans || true
+            exit "$status"
+          }
+          trap cleanup EXIT
+          docker compose config --quiet
+          docker compose -p "$project" up -d --build
+          for attempt in $(seq 1 50); do
+            if curl --fail --silent http://127.0.0.1:4273/api/health | jq -e '.ok == true' >/dev/null; then break; fi
+            if [ "$attempt" -eq 50 ]; then exit 1; fi
+            sleep 0.2
+          done
+          container="$(docker compose -p "$project" ps -q)"
+          test -n "$container"
+          test "$(docker inspect -f '{{.Config.User}}' "$container")" = "node"
+          test "$(docker inspect -f '{{.HostConfig.ReadonlyRootfs}}' "$container")" = "true"
+          test "$(docker inspect -f '{{(index (index .NetworkSettings.Ports "4173/tcp") 0).HostIp}}' "$container")" = "127.0.0.1"
+          docker inspect "$container" | jq -e '.[0].HostConfig.CapDrop | index("ALL")' >/dev/null
+          docker inspect "$container" | jq -e '.[0].HostConfig.SecurityOpt | index("no-new-privileges:true")' >/dev/null
+          docker inspect "$container" | jq -e '.[0].Mounts | any(.Destination == "/data" and .Type == "volume")' >/dev/null
+          docker inspect "$container" | jq -e '.[0].HostConfig.Tmpfs | has("/tmp")' >/dev/null
+          test "$(docker inspect -f '{{.HostConfig.PidsLimit}}' "$container")" = "100"

@@ -19,6 +19,10 @@ export async function inspectEnvironment(env = process.env, nodeVersion = proces
   if (!["127.0.0.1", "localhost", "::1"].includes(host)) {
     warnings.push(`HOST=${host}: uygulama yerel ağdan erişilebilir olabilir; kimlik doğrulama henüz yok`);
   }
+  if (env.PUBLIC_PORT) {
+    const publicPort = Number(env.PUBLIC_PORT);
+    if (!Number.isInteger(publicPort) || publicPort < 1 || publicPort > 65535) errors.push("PUBLIC_PORT 1-65535 arasında bir tam sayı olmalıdır");
+  }
 
   const dataDir = path.resolve(env.DATA_DIR || path.join(ROOT, "data"));
   try {

@@ -62,3 +62,9 @@ test("eski Node sürümünü reddeder", async t => {
   assert.equal(result.ok, false);
   assert.match(result.errors.join(" "), /Node\.js 24/);
 });
+
+test("geçersiz dış portu uygulama başlamadan reddeder", async t => {
+  const result = await inspectEnvironment({ DATA_DIR: await temporaryDataDir(t), PUBLIC_PORT: "70000" }, "24.14.1");
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join(" "), /PUBLIC_PORT/);
+});

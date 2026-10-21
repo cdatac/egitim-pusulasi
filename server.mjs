@@ -507,8 +507,11 @@ async function api(req, res, url) {
 
 const contentTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml" };
 const port = Number(process.env.PORT || 4173);
+const publicPort = Number(process.env.PUBLIC_PORT || port);
 const host = process.env.HOST || "127.0.0.1";
-const allowedAuthorities = new Set([`${host}:${port}`, `127.0.0.1:${port}`, `localhost:${port}`, `[::1]:${port}`]);
+if (!Number.isInteger(publicPort) || publicPort < 1 || publicPort > 65535) throw new Error("PUBLIC_PORT 1-65535 arasında bir tam sayı olmalıdır");
+const allowedPorts = new Set([port, publicPort]);
+const allowedAuthorities = new Set([...allowedPorts].flatMap(value => [`${host}:${value}`, `127.0.0.1:${value}`, `localhost:${value}`, `[::1]:${value}`]));
 const allowedOrigins = new Set([...allowedAuthorities].map(value => `http://${value}`));
 
 const server = http.createServer(async (req, res) => {

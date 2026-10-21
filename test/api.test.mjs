@@ -203,6 +203,19 @@ test("yabancı web kaynağından localhost erişimini reddeder", async t => {
   assert.equal((await fetch(`${app.base}/api/dashboard`).then(value => value.json())).total, 0);
 });
 
+test("Docker dış portunu Host ve Origin doğrulamasına açıkça ekler", async t => {
+  const app = await startServer({ PUBLIC_PORT: "49999" });
+  t.after(() => app.close());
+  const accepted = await fetch(`${app.base}/api/health`, {
+    headers: { host: "127.0.0.1:49999", origin: "http://127.0.0.1:49999" }
+  });
+  assert.equal(accepted.status, 200);
+  const rejected = await fetch(`${app.base}/api/health`, {
+    headers: { host: "127.0.0.1:49998", origin: "http://127.0.0.1:49998" }
+  });
+  assert.equal(rejected.status, 403);
+});
+
 test("anahtarsız yerel model bile yalnızca ileti başına onaylı çağrıda veri işler", async t => {
   let calls = 0;
   let receivedInput = "";

@@ -2,7 +2,7 @@ services:
   egitim-pusulasi:
     build: .
     ports:
-      - "127.0.0.1:4173:4173"
+      - "127.0.0.1:${APP_PORT:-4173}:4173"
     volumes:
       - egitim-pusulasi-data:/data
     environment:
@@ -10,6 +10,7 @@ services:
       AI_API_KEY: ${AI_API_KEY:-}
       AI_MODEL: ${AI_MODEL:-}
       AI_REDACT: ${AI_REDACT:-true}
+      PUBLIC_PORT: ${APP_PORT:-4173}
     read_only: true
     tmpfs:
       - /tmp:size=32m,noexec,nosuid,nodev
@@ -17,6 +18,9 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+    init: true
+    pids_limit: 100
+    stop_grace_period: 10s
     restart: unless-stopped
 
 volumes:

@@ -41,7 +41,18 @@ Docker kullananlar proje klasöründe şu komutu çalıştırabilir:
 docker compose up --build
 ```
 
+Compose bu değeri konteynere `PUBLIC_PORT` olarak aktarır; böylece Host ve Origin doğrulaması yalnızca seçilen dış localhost portunu da kabul eder.
+
+Konteyner `node` kullanıcısıyla, salt-okunur kök dosya sistemiyle, düşürülmüş Linux yetenekleriyle ve süreç sayısı sınırıyla çalışır. Kalıcı yazma yalnızca `/data` volume'üne, geçici yazma sınırlı `/tmp` alanına yapılır. İmaj yerleşik sağlık kontrolü içerir.
+
 Compose portu yalnızca `127.0.0.1` üzerinde yayımlar ve veriyi `egitim-pusulasi-data` adlı volume içinde tutar. Volume silinirse yerel okul verileri de silinir.
+
+`4173` doluysa yalnızca localhost üzerinde farklı bir port seçilebilir:
+
+```powershell
+$env:APP_PORT="4273"
+docker compose up --build
+```
 
 ## Veriler ve yedekleme
 
