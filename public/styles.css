@@ -42,7 +42,10 @@ button.danger { background:transparent; color:#9a3e26; border:1px solid #d9ad9f;
 details { border-top:1px solid var(--line); padding-top:14px; color:var(--muted); }
 summary { cursor:pointer; font-weight:650; color:#50615a; }
 details p { white-space:pre-wrap; margin-top:12px; }
-.delete-message { margin-top:14px; padding:7px 0; border-radius:0; background:transparent; color:#8b5e50; font-size:.76rem; }
+.message-controls { display:flex; align-items:center; gap:12px; margin-top:14px; }
+.message-controls button { padding:7px 11px; font-size:.76rem; }
+.ai-message { background:#315a8a; }
+.delete-message { padding-left:0 !important; border-radius:0; background:transparent; color:#8b5e50; }
 .empty { grid-column:1/-1; display:grid; place-items:center; gap:8px; min-height:220px; border:1px dashed #b8b8ad; border-radius:20px; color:var(--muted); }
 .empty strong { color:var(--ink); }
 code { background:#eceae2; border-radius:6px; padding:2px 5px; }

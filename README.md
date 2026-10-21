@@ -21,7 +21,7 @@ $env:AI_MODEL="..."
 npm start
 ```
 
-API anahtarı veritabanına veya tarayıcıya yazılmaz. AI servisi etkinleştirildiğinde eklenen mesaj içeriği analiz için o servise gönderilir.
+API anahtarı veritabanına veya tarayıcıya yazılmaz. AI servisi etkin olsa bile içe aktarılan mesajlar otomatik gönderilmez. Her ileti için **AI ile analiz et** seçilir ve gönderim kapsamı onaylanır. E-posta ve telefon ifadeleri varsayılan olarak çağrıdan önce maskelenir.
 
 ## Mevcut kapsam
 

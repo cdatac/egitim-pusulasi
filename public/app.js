@@ -1,6 +1,7 @@
 const $ = selector => document.querySelector(selector);
 const feed = $("#feed");
 let messages = [];
+let aiConfigured = false;
 
 function esc(value = "") {
   return String(value).replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
@@ -27,7 +28,10 @@ function render() {
       <p class="summary">${esc(analysis?.summary ?? item.body)}</p>
       ${tasks ? `<div class="actions"><strong>Yapılacaklar</strong><ul>${tasks}</ul></div>` : ""}
       <details><summary>Kaynak iletiyi göster</summary><p>${esc(item.body)}</p><small>${esc(item.sender ?? "Kaynak belirtilmedi")} · ${esc(analysis?.provider ?? "işlenmedi")}</small></details>
-      <button class="delete-message" data-id="${item.id}" aria-label="${esc(item.title)} iletisini sil">İletiyi sil</button>
+      <div class="message-controls">
+        ${aiConfigured ? `<button class="ai-message" data-id="${item.id}">AI ile analiz et</button>` : ""}
+        <button class="delete-message" data-id="${item.id}" aria-label="${esc(item.title)} iletisini sil">İletiyi sil</button>
+      </div>
     </article>`;
   }).join("");
 }
@@ -38,7 +42,8 @@ async function refresh(q = "") {
     fetch("/api/dashboard").then(r => r.json()),
     fetch(`/api/messages?q=${encodeURIComponent(q)}`).then(r => r.json())
   ]);
-  $("#ai-state").textContent = health.aiConfigured ? "AI bağlı" : "Yerel analiz";
+  aiConfigured = health.aiConfigured;
+  $("#ai-state").textContent = health.aiConfigured ? "AI hazır · onaylı" : "Yerel analiz";
   $("#total").textContent = dashboard.total;
   $("#urgent").textContent = dashboard.urgent;
   messages = list;
@@ -74,6 +79,26 @@ $("#search").addEventListener("input", event => {
 });
 
 feed.addEventListener("click", async event => {
+  const aiButton = event.target.closest(".ai-message");
+  if (aiButton) {
+    const previewResponse = await fetch(`/api/messages/${aiButton.dataset.id}/ai-preview`);
+    const preview = await previewResponse.json();
+    if (!previewResponse.ok) return alert(preview.error ?? "AI önizlemesi alınamadı.");
+    const masking = preview.redactionEnabled ? "E-posta ve telefon maskelemesi açık." : "Maskeleme kapalı.";
+    const accepted = confirm(`Başlık, gönderen, tarih ve mesaj gövdesi seçtiğiniz AI servisine gönderilecek. ${masking}\n\nYaklaşık ${preview.characters} karakter gönderilecek. Devam edilsin mi?`);
+    if (!accepted) return;
+    aiButton.disabled = true;
+    aiButton.textContent = "AI işliyor…";
+    const response = await fetch(`/api/messages/${aiButton.dataset.id}/analyze`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ mode: "cloud" })
+    });
+    const result = await response.json();
+    if (!response.ok) alert(result.error ?? "AI analizi başarısız oldu.");
+    await refresh($("#search").value);
+    return;
+  }
   const button = event.target.closest(".delete-message");
   if (!button) return;
   if (!confirm("Bu ileti ve analizi kalıcı olarak silinsin mi?")) return;

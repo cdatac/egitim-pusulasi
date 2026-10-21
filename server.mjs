@@ -4,7 +4,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
-import { analyzeMessage } from "./lib/analyze.mjs";
+import { analyzeMessage, cloudAiPreview, isCloudAiConfigured } from "./lib/analyze.mjs";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(ROOT, "data");
@@ -98,10 +98,10 @@ function getMessage(id) {
   return row ? rowToMessage(row) : null;
 }
 
-async function runAnalysis(id) {
+async function runAnalysis(id, mode = "local") {
   const message = getMessage(id);
   if (!message) return null;
-  const analysis = await analyzeMessage(message);
+  const analysis = await analyzeMessage(message, { mode });
   db.prepare(`
     INSERT INTO analyses(message_id, summary, category, priority, action_items, dates, confidence, provider, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
@@ -117,7 +117,7 @@ async function runAnalysis(id) {
 
 async function api(req, res, url) {
   if (req.method === "GET" && url.pathname === "/api/health") {
-    return json(res, 200, { ok: true, aiConfigured: Boolean(process.env.AI_API_URL && process.env.AI_API_KEY && process.env.AI_MODEL) });
+    return json(res, 200, { ok: true, aiConfigured: isCloudAiConfigured(), cloudRequiresPerMessageConsent: true });
   }
   if (req.method === "GET" && url.pathname === "/api/messages") {
     const query = url.searchParams.get("q")?.trim();
@@ -154,8 +154,23 @@ async function api(req, res, url) {
   }
   const analyzeMatch = url.pathname.match(/^\/api\/messages\/(\d+)\/analyze$/);
   if (req.method === "POST" && analyzeMatch) {
-    const message = await runAnalysis(Number(analyzeMatch[1]));
+    const payload = await bodyJson(req);
+    const mode = payload.mode === "cloud" ? "cloud" : "local";
+    const message = await runAnalysis(Number(analyzeMatch[1]), mode);
     return message ? json(res, 200, message) : json(res, 404, { error: "Mesaj bulunamadı" });
+  }
+  const previewMatch = url.pathname.match(/^\/api\/messages\/(\d+)\/ai-preview$/);
+  if (req.method === "GET" && previewMatch) {
+    const message = getMessage(Number(previewMatch[1]));
+    if (!message) return json(res, 404, { error: "Mesaj bulunamadı" });
+    if (!isCloudAiConfigured()) return json(res, 409, { error: "Bulut AI servisi yapılandırılmamış" });
+    const preview = cloudAiPreview(message);
+    return json(res, 200, {
+      providerConfigured: true,
+      redactionEnabled: preview.redactionEnabled,
+      fields: preview.fields,
+      characters: preview.characters
+    });
   }
   const deleteMatch = url.pathname.match(/^\/api\/messages\/(\d+)$/);
   if (req.method === "DELETE" && deleteMatch) {

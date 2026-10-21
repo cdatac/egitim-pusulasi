@@ -11,9 +11,9 @@ Eğitim Pusulası çocukların okul verileriyle çalışır. Bu nedenle veri min
 
 ## İsteğe bağlı bulut AI
 
-Kullanıcı `AI_API_URL`, `AI_API_KEY` ve `AI_MODEL` değişkenlerini kendisi ayarlarsa mesaj başlığı, gönderen, tarih ve gövde seçilen AI servisine analiz için gönderilir. API anahtarı tarayıcıya veya veritabanına yazılmaz.
+Kullanıcı `AI_API_URL`, `AI_API_KEY` ve `AI_MODEL` değişkenlerini kendisi ayarlasa bile içerik otomatik gönderilmez. Her ileti için ayrı **AI ile analiz et** işlemi ve gönderim onayı gerekir. Onay verilirse mesaj başlığı, gönderen, tarih ve gövde seçilen AI servisine analiz için gönderilir. E-posta ve telefon ifadeleri varsayılan olarak maskelenir. API anahtarı tarayıcıya veya veritabanına yazılmaz.
 
-Gelecek sürüm, gönderilecek alanları kullanıcıya önceden gösterecek ve isim/iletişim bilgilerini maskeleme seçeneği sunacaktır.
+Arayüz, gönderilecek alanları, yaklaşık karakter sayısını ve maskeleme durumunu çağrıdan önce gösterir. Kişi adlarını güvenilir biçimde tanımak için ayrıca kullanıcı tarafından yönetilen maskeleme listesi planlanmaktadır.
 
 ## Toplanmayan veriler
 

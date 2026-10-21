@@ -42,7 +42,7 @@
 - [ ] Takvim dışa aktarma
 - [ ] Mesajlar üzerinde kaynaklı soru-cevap
 - [ ] Bulut AI ve yerel model seçenekleri
-- [ ] Gönderilecek alanlar için görünür gizlilik önizlemesi
+- [x] Gönderilecek alanlar için görünür gizlilik önizlemesi ve ileti başına onay
 
 ### 3. Herkes için dağıtım
 
