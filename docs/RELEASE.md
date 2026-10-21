@@ -21,7 +21,7 @@ npm run audit:release
 npm run release:verify -- v0.1.0
 ```
 
-Son komut ancak etiket `package.json` sürümüyle eşleşirse, lisans ve zorunlu topluluk/güvenlik belgeleri varsa başarılı olur. Hassas veri denetimi çalışma ağacını ve tüm Git geçmişini tarar.
+Son komut ancak etiket `package.json` sürümüyle eşleşirse, lisans ve zorunlu topluluk/güvenlik belgeleri varsa ve örnek GitHub güvenlik bağlantıları gerçek depo bilgileriyle değiştirilmişse başarılı olur. Hassas veri denetimi çalışma ağacını ve tüm Git geçmişini tarar.
 
 Ek kontroller:
 
@@ -36,7 +36,7 @@ Ek kontroller:
 `vMAJOR.MINOR.PATCH` etiketi gönderildiğinde `.github/workflows/release.yml`:
 
 1. Test, sözdizimi ve yayın denetimlerini çalıştırır.
-2. Etiket-sürüm ve lisans kapısını doğrular.
+2. Etiket-sürüm, lisans ve gerçek depo güvenlik bağlantıları kapısını doğrular.
 3. Yalnızca Git tarafından izlenen dosyalardan `.zip` ve `.tar.gz` üretir.
 4. Her arşiv için `SHA256SUMS.txt` oluşturur.
 5. Etikete bağlı GitHub Release yayımlar.
