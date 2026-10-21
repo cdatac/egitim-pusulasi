@@ -12,6 +12,22 @@ npm start
 
 Ardından `http://127.0.0.1:4173` adresini açın.
 
+Başlangıç koşullarını yalnızca denetlemek için:
+
+```powershell
+npm run doctor
+```
+
+### Docker ile
+
+Docker Desktop veya Docker Engine kuruluysa:
+
+```powershell
+docker compose up --build
+```
+
+Ardından yine `http://127.0.0.1:4173` adresini açın. Compose yapılandırması portu yalnızca localhost'a bağlar ve verileri adlandırılmış bir Docker volume içinde tutar.
+
 Varsayılan durumda içerik bilgisayardan çıkmaz; yerel Türkçe kurallarla sınıflandırılır. Yapay zekâ bağlantısı ayrıca ve yalnızca süreç ortamında yapılandırılır:
 
 ```powershell

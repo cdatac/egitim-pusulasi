@@ -47,7 +47,8 @@
 ### 3. Herkes için dağıtım
 
 - [ ] Windows/macOS/Linux için kolay çalıştırma
-- [ ] Docker seçeneği
+- [ ] Güvenli Docker Compose seçeneği (yapılandırma doğrulandı; gerçek imaj derlemesi Docker motoru bekliyor)
+- [x] Başlangıç ortamı denetleyicisi
 - [ ] İlk kurulum sihirbazı
 - [ ] Türkçe kullanım ve güvenlik belgeleri
 - [ ] Erişilebilirlik ve mobil uyum
