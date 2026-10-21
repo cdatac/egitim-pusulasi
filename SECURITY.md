@@ -21,5 +21,6 @@ Bildirimde gerçek parola, oturum çerezi, öğrenci adı, okul mesajı veya ekr
 - Uzak AI etkin değilse mesaj içeriği seçilen üçüncü tarafa gönderilmez.
 - Yerel veya uzak AI etkin olsa bile her ileti analizi ve her kaynaklı soru için ayrı kullanıcı onayı sunucuda zorunludur.
 - E-posta ve telefon ifadeleri bulut çağrısından önce varsayılan olarak maskelenir.
+- AI istekleri 30 saniyede sonlandırılır; yanıtlar 1 MB ile sınırlandırılır ve saklanmadan önce beklenen alanlara indirgenir.
 
 Bu ön sürüm henüz İnternet'e açık bir sunucu olarak çalıştırılmamalıdır.
