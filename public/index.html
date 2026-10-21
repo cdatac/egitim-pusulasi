@@ -31,6 +31,22 @@
         <article><span id="tasks">0</span><small>açık görev</small></article>
       </section>
 
+      <section class="panel digest" aria-labelledby="digest-title">
+        <div class="digest-head">
+          <div>
+            <p class="eyebrow">KAYNAKLI TAKİP ÖZETİ</p>
+            <h2 id="digest-title">Son 7 gün</h2>
+          </div>
+          <label>Dönem
+            <select id="digest-period">
+              <option value="week">Son 7 gün</option>
+              <option value="today">Bugün</option>
+            </select>
+          </label>
+        </div>
+        <div id="digest-content" aria-live="polite"></div>
+      </section>
+
       <section class="panel composer">
         <div>
           <p class="eyebrow">HIZLI İÇE AKTAR</p>

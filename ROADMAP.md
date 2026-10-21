@@ -40,7 +40,7 @@
 
 ### 2. Ebeveyn asistanı
 
-- [ ] Kaynaklı günlük/haftalık özet
+- [x] Kaynaklı günlük/haftalık özet
 - [ ] Ödev, sınav, etkinlik, ödeme ve malzeme çıkarma
 - [ ] Takvim dışa aktarma
 - [ ] Mesajlar üzerinde kaynaklı soru-cevap

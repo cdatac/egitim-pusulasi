@@ -46,6 +46,7 @@ API anahtarı veritabanına veya tarayıcıya yazılmaz. AI servisi etkin olsa b
 - Kaynağı koruyan özet kartları
 - Kategori, öncelik, tarih ve yapılacak iş çıkarma
 - Arama
+- Her çocuk profili için kaynağa bağlı bugün/son 7 gün özeti
 - JSON veri dışa aktarma
 - Birden fazla çocuk için birbirinden yalıtılmış profiller
 - Tek iletiyi veya seçili profile ait tüm yerel veriyi silme

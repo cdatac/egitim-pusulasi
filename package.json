@@ -6,7 +6,7 @@
   "scripts": {
     "doctor": "node scripts/doctor.mjs",
     "start": "node scripts/doctor.mjs && node --disable-warning=ExperimentalWarning server.mjs",
-    "check": "node --check server.mjs && node --check lib/analyze.mjs && node --check lib/connectors/contract.mjs && node --check public/app.js && node --check scripts/doctor.mjs && node --check scripts/release-audit.mjs",
+    "check": "node --check server.mjs && node --check lib/analyze.mjs && node --check lib/digest.mjs && node --check lib/connectors/contract.mjs && node --check public/app.js && node --check scripts/doctor.mjs && node --check scripts/release-audit.mjs",
     "test": "node --disable-warning=ExperimentalWarning --test",
     "audit:release": "node scripts/release-audit.mjs"
   },

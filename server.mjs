@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import { analyzeMessage, cloudAiPreview, isCloudAiConfigured } from "./lib/analyze.mjs";
 import { ConnectorValidationError, connectorDescriptors, normalizeConnectorItems } from "./lib/connectors/contract.mjs";
+import { buildDigest, DigestValidationError } from "./lib/digest.mjs";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(ROOT, "data");
@@ -264,6 +265,13 @@ async function api(req, res, url) {
     const recent = db.prepare(`${selectSql}${profileWhere} ORDER BY COALESCE(m.occurred_at, m.created_at) DESC LIMIT 5`).all(...args).map(rowToMessage);
     return json(res, 200, { total: Number(counts.total ?? 0), urgent: Number(counts.urgent ?? 0), categories, recent });
   }
+  if (req.method === "GET" && url.pathname === "/api/digest") {
+    const profileId = resolveProfileId(url.searchParams.get("profileId"));
+    const period = url.searchParams.get("period") || "week";
+    const anchor = url.searchParams.get("anchor") || new Date();
+    const messages = db.prepare(`${selectSql} WHERE m.profile_id = ? ORDER BY COALESCE(m.occurred_at, m.created_at) DESC`).all(profileId).map(rowToMessage);
+    return json(res, 200, buildDigest(messages, { period, anchor }));
+  }
   return false;
 }
 
@@ -303,7 +311,7 @@ const server = http.createServer(async (req, res) => {
     });
     res.end(data);
   } catch (error) {
-    if (error instanceof ProfileValidationError) return json(res, 400, { error: error.message });
+    if (error instanceof ProfileValidationError || error instanceof DigestValidationError) return json(res, 400, { error: error.message });
     json(res, 500, { error: error.message });
   }
 });

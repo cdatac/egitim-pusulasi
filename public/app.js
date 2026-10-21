@@ -4,6 +4,7 @@ let messages = [];
 let aiConfigured = false;
 let profiles = [];
 let activeProfileId = null;
+let currentDigest = null;
 
 function esc(value = "") {
   return String(value).replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
@@ -21,7 +22,7 @@ function render() {
     const analysis = item.analysis;
     const dates = analysis?.dates?.map(date => `<span class="chip date">${esc(date.value)}</span>`).join("") ?? "";
     const tasks = analysis?.actionItems?.map(task => `<li>${esc(task.text)}</li>`).join("") ?? "";
-    return `<article class="message ${analysis?.priority === "yüksek" ? "high" : ""}">
+    return `<article id="message-${item.id}" class="message ${analysis?.priority === "yüksek" ? "high" : ""}">
       <div class="message-head">
         <div><span class="chip">${esc(analysis?.category ?? item.kind)}</span>${dates}</div>
         <small>${esc(item.occurredAt || item.createdAt)}</small>
@@ -38,19 +39,49 @@ function render() {
   }).join("");
 }
 
+function renderDigest() {
+  const content = $("#digest-content");
+  if (!currentDigest?.sourceCount) {
+    content.innerHTML = `<p class="digest-empty">Bu dönemde alınan ileti yok.</p><small>${esc(currentDigest?.note ?? "")}</small>`;
+    return;
+  }
+  const categories = currentDigest.categories.map(item => `<span class="chip">${esc(item.category)} · ${item.count}</span>`).join("");
+  const items = currentDigest.items.map(item => {
+    const tasks = item.actionItems.length ? `${item.actionItems.length} görev` : "Görev yok";
+    const dates = item.dates.map(date => esc(date.value)).join(", ");
+    return `<a class="digest-item" href="#message-${item.messageId}" data-message-id="${item.messageId}">
+      <span><strong>${esc(item.title)}</strong><small>${esc(item.category)} · ${tasks}${dates ? ` · ${dates}` : ""}</small></span>
+      <span aria-hidden="true">Kaynağa git →</span>
+    </a>`;
+  }).join("");
+  content.innerHTML = `<div class="digest-counts">
+      <span><strong>${currentDigest.sourceCount}</strong> ileti</span>
+      <span><strong>${currentDigest.urgentCount}</strong> öncelikli</span>
+      <span><strong>${currentDigest.taskCount}</strong> açık görev</span>
+    </div>
+    <div class="digest-categories">${categories}</div>
+    <div class="digest-items">${items}</div>
+    <small>${esc(currentDigest.note)}</small>`;
+}
+
 async function refresh(q = "") {
   if (!activeProfileId) return;
   const profile = `profileId=${encodeURIComponent(activeProfileId)}`;
-  const [health, dashboard, list] = await Promise.all([
+  const period = $("#digest-period").value;
+  const [health, dashboard, list, digest] = await Promise.all([
     fetch("/api/health").then(r => r.json()),
     fetch(`/api/dashboard?${profile}`).then(r => r.json()),
-    fetch(`/api/messages?${profile}&q=${encodeURIComponent(q)}`).then(r => r.json())
+    fetch(`/api/messages?${profile}&q=${encodeURIComponent(q)}`).then(r => r.json()),
+    fetch(`/api/digest?${profile}&period=${encodeURIComponent(period)}`).then(r => r.json())
   ]);
   aiConfigured = health.aiConfigured;
   $("#ai-state").textContent = health.aiConfigured ? "AI hazır · onaylı" : "Yerel analiz";
   $("#total").textContent = dashboard.total;
   $("#urgent").textContent = dashboard.urgent;
   messages = list;
+  currentDigest = digest;
+  $("#digest-title").textContent = digest.label;
+  renderDigest();
   render();
 }
 
@@ -96,6 +127,20 @@ $("#profile-select").addEventListener("change", async event => {
   activeProfileId = Number(event.target.value);
   localStorage.setItem("egitim-pusulasi-profile", String(activeProfileId));
   await refresh($("#search").value);
+});
+
+$("#digest-period").addEventListener("change", () => refresh($("#search").value));
+
+$("#digest-content").addEventListener("click", async event => {
+  const link = event.target.closest(".digest-item");
+  if (!link) return;
+  event.preventDefault();
+  const targetId = `message-${link.dataset.messageId}`;
+  if (!document.getElementById(targetId)) {
+    $("#search").value = "";
+    await refresh();
+  }
+  document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth", block: "center" });
 });
 
 $("#add-profile").addEventListener("click", async () => {

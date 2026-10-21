@@ -54,7 +54,8 @@ test("sağlık, içe aktarma, analiz ve pano akışı", async t => {
       source: "test",
       externalId: "duyuru-1",
       title: "Matematik ödevi",
-      body: "Yarın çalışma kağıdını teslim ediniz."
+      body: "Yarın çalışma kağıdını teslim ediniz.",
+      occurredAt: "2026-10-21T10:00:00+03:00"
     })
   });
   assert.equal(importResponse.status, 201);
@@ -73,6 +74,15 @@ test("sağlık, içe aktarma, analiz ve pano akışı", async t => {
   const dashboard = await fetch(`${app.base}/api/dashboard`).then(response => response.json());
   assert.equal(dashboard.total, 1);
   assert.equal(dashboard.urgent, 1);
+
+  const digest = await fetch(`${app.base}/api/digest?profileId=${imported.items[0].profileId}&period=week&anchor=2026-10-21`).then(response => response.json());
+  assert.equal(digest.sourceCount, 1);
+  assert.equal(digest.urgentCount, 1);
+  assert.equal(digest.taskCount, 1);
+  assert.equal(digest.items[0].messageId, imported.items[0].id);
+  assert.match(digest.note, /alınma tarihine/);
+  const invalidDigest = await fetch(`${app.base}/api/digest?profileId=${imported.items[0].profileId}&period=month`);
+  assert.equal(invalidDigest.status, 400);
 
   const search = await fetch(`${app.base}/api/messages?q=çalışma`).then(response => response.json());
   assert.equal(search.length, 1);
@@ -243,7 +253,7 @@ test("birden fazla çocuk profilini birbirinden ayırır", async t => {
     const imported = await fetch(`${app.base}/api/messages`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ profileId, source: "test", externalId: "aynı-okul-kimliği", title: "Ortak duyuru", body: "Her çocuk için ayrı kayıt." })
+      body: JSON.stringify({ profileId, source: "test", externalId: "aynı-okul-kimliği", title: "Ortak duyuru", body: "Her çocuk için ayrı kayıt.", occurredAt: "2026-10-21T09:00:00+03:00" })
     }).then(response => response.json());
     assert.equal(imported.imported, 1);
     assert.equal(imported.items[0].profileId, profileId);
@@ -254,6 +264,11 @@ test("birden fazla çocuk profilini birbirinden ayırır", async t => {
   const secondDashboard = await fetch(`${app.base}/api/dashboard?profileId=${secondProfile.id}`).then(response => response.json());
   assert.equal(firstDashboard.total, 1);
   assert.equal(secondDashboard.total, 1);
+  const firstDigest = await fetch(`${app.base}/api/digest?profileId=${initialProfiles[0].id}&period=today&anchor=2026-10-21`).then(response => response.json());
+  const secondDigest = await fetch(`${app.base}/api/digest?profileId=${secondProfile.id}&period=today&anchor=2026-10-21`).then(response => response.json());
+  assert.equal(firstDigest.sourceCount, 1);
+  assert.equal(secondDigest.sourceCount, 1);
+  assert.ok(firstDigest.items.every(item => item.messageId !== secondDigest.items[0].messageId));
 
   await fetch(`${app.base}/api/messages?profileId=${initialProfiles[0].id}`, { method: "DELETE" });
   assert.equal((await fetch(`${app.base}/api/dashboard?profileId=${initialProfiles[0].id}`).then(response => response.json())).total, 0);
