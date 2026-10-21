@@ -18,8 +18,8 @@ Bildirimde gerçek parola, oturum çerezi, öğrenci adı, okul mesajı veya ekr
 - K12 bağlayıcıları salt okunur tasarlanır.
 - API anahtarları ve oturum bilgileri veritabanına yazılmaz.
 - Yerel veritabanı, APK'lar ve ağ kayıtları Git tarafından yok sayılır.
-- Bulut AI etkin değilse mesaj içeriği yerel bilgisayardan çıkmaz.
-- Bulut AI etkin olsa bile her ileti analizi ve her kaynaklı soru için ayrı kullanıcı onayı gerekir.
+- Uzak AI etkin değilse mesaj içeriği seçilen üçüncü tarafa gönderilmez.
+- Yerel veya uzak AI etkin olsa bile her ileti analizi ve her kaynaklı soru için ayrı kullanıcı onayı sunucuda zorunludur.
 - E-posta ve telefon ifadeleri bulut çağrısından önce varsayılan olarak maskelenir.
 
 Bu ön sürüm henüz İnternet'e açık bir sunucu olarak çalıştırılmamalıdır.

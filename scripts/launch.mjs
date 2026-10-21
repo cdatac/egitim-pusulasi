@@ -23,7 +23,7 @@ export async function isEducationCompassHealthy(url, fetchImpl = fetch) {
     const response = await fetchImpl(`${url}/api/health`, { signal: AbortSignal.timeout(800) });
     if (!response.ok) return false;
     const result = await response.json();
-    return result?.ok === true && typeof result.cloudRequiresPerMessageConsent === "boolean";
+    return result?.ok === true && result.externalAiRequiresPerRequestConsent === true;
   } catch {
     return false;
   }

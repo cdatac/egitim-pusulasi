@@ -7,7 +7,7 @@
     "doctor": "node scripts/doctor.mjs",
     "start": "node scripts/doctor.mjs && node --disable-warning=ExperimentalWarning server.mjs",
     "launch": "node scripts/launch.mjs",
-    "check": "node --check server.mjs && node --check lib/analyze.mjs && node --check lib/calendar.mjs && node --check lib/digest.mjs && node --check lib/qa.mjs && node --check lib/connectors/contract.mjs && node --check public/app.js && node --check scripts/doctor.mjs && node --check scripts/launch.mjs && node --check scripts/release-audit.mjs && node --check scripts/verify-release.mjs",
+    "check": "node --check server.mjs && node --check lib/ai-config.mjs && node --check lib/analyze.mjs && node --check lib/calendar.mjs && node --check lib/digest.mjs && node --check lib/qa.mjs && node --check lib/connectors/contract.mjs && node --check public/app.js && node --check scripts/doctor.mjs && node --check scripts/launch.mjs && node --check scripts/release-audit.mjs && node --check scripts/verify-release.mjs",
     "test": "node --disable-warning=ExperimentalWarning --test",
     "audit:release": "node scripts/release-audit.mjs",
     "release:verify": "node scripts/verify-release.mjs"

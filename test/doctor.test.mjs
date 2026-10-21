@@ -16,7 +16,29 @@ test("varsayılan yerel yapılandırmayı hazır kabul eder", async t => {
   assert.equal(result.ok, true);
   assert.equal(result.host, "127.0.0.1");
   assert.equal(result.aiConfigured, false);
+  assert.equal(result.aiMode, "disabled");
   assert.deepEqual(result.warnings, []);
+});
+
+test("anahtarsız localhost AI servisini yerel model olarak kabul eder", async t => {
+  const result = await inspectEnvironment({
+    DATA_DIR: await temporaryDataDir(t),
+    AI_API_URL: "http://localhost:11434/v1/responses",
+    AI_MODEL: "yerel-deneme"
+  }, "24.14.1");
+  assert.equal(result.ok, true);
+  assert.equal(result.aiConfigured, true);
+  assert.equal(result.aiMode, "local");
+});
+
+test("anahtarsız uzak AI servisini reddeder", async t => {
+  const result = await inspectEnvironment({
+    DATA_DIR: await temporaryDataDir(t),
+    AI_API_URL: "https://example.invalid/v1/responses",
+    AI_MODEL: "uzak-deneme"
+  }, "24.14.1");
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join(" "), /AI_API_KEY eksik/);
 });
 
 test("yarım AI yapılandırmasını uygulama başlamadan reddeder", async t => {

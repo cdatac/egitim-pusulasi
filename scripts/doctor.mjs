@@ -2,6 +2,7 @@ import { access, mkdir, rm, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { inspectAiConfiguration } from "../lib/ai-config.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -11,19 +12,8 @@ export async function inspectEnvironment(env = process.env, nodeVersion = proces
   const major = Number(String(nodeVersion).split(".")[0]);
   if (!Number.isFinite(major) || major < 24) errors.push(`Node.js 24 veya üzeri gerekli; bulunan sürüm: ${nodeVersion}`);
 
-  const aiNames = ["AI_API_URL", "AI_API_KEY", "AI_MODEL"];
-  const configured = aiNames.filter(name => Boolean(env[name]));
-  if (configured.length > 0 && configured.length < aiNames.length) {
-    errors.push(`AI yapılandırması yarım: ${aiNames.filter(name => !env[name]).join(", ")} eksik`);
-  }
-  if (env.AI_API_URL) {
-    try {
-      const protocol = new URL(env.AI_API_URL).protocol;
-      if (!["http:", "https:"].includes(protocol)) errors.push("AI_API_URL yalnızca http veya https olabilir");
-    } catch {
-      errors.push("AI_API_URL geçerli bir URL değil");
-    }
-  }
+  const ai = inspectAiConfiguration(env);
+  errors.push(...ai.errors);
 
   const host = env.HOST || "127.0.0.1";
   if (!["127.0.0.1", "localhost", "::1"].includes(host)) {
@@ -46,7 +36,8 @@ export async function inspectEnvironment(env = process.env, nodeVersion = proces
     nodeVersion,
     host,
     dataDir,
-    aiConfigured: configured.length === aiNames.length,
+    aiConfigured: ai.configured,
+    aiMode: ai.mode,
     aiRedactionEnabled: env.AI_REDACT !== "false",
     errors,
     warnings

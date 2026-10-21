@@ -17,7 +17,7 @@ test("platforma uygun tarayıcı komutunu sabit URL ile oluşturur", () => {
 });
 
 test("yalnızca Eğitim Pusulası sağlık yanıtını çalışan sunucu sayar", async () => {
-  const healthyFetch = async () => ({ ok: true, json: async () => ({ ok: true, cloudRequiresPerMessageConsent: true }) });
+  const healthyFetch = async () => ({ ok: true, json: async () => ({ ok: true, externalAiRequiresPerRequestConsent: true }) });
   const unrelatedFetch = async () => ({ ok: true, json: async () => ({ ok: true }) });
   assert.equal(await isEducationCompassHealthy("http://127.0.0.1:1", healthyFetch), true);
   assert.equal(await isEducationCompassHealthy("http://127.0.0.1:1", unrelatedFetch), false);
@@ -28,7 +28,7 @@ test("sunucu sağlık verene kadar sınırlı sayıda dener", async () => {
   let calls = 0;
   const fetchImpl = async () => ({
     ok: true,
-    json: async () => ({ ok: ++calls >= 3, cloudRequiresPerMessageConsent: true })
+    json: async () => ({ ok: ++calls >= 3, externalAiRequiresPerRequestConsent: true })
   });
   await waitUntilHealthy("http://127.0.0.1:1", { exitCode: null }, { attempts: 3, delayMs: 0, fetchImpl });
   assert.equal(calls, 3);

@@ -49,7 +49,7 @@ docker compose up --build
 
 Ardından yine `http://127.0.0.1:4173` adresini açın. Compose yapılandırması portu yalnızca localhost'a bağlar ve verileri adlandırılmış bir Docker volume içinde tutar.
 
-Varsayılan durumda içerik bilgisayardan çıkmaz; yerel Türkçe kurallarla sınıflandırılır. Yapay zekâ bağlantısı ayrıca ve yalnızca süreç ortamında yapılandırılır:
+Varsayılan durumda içerik bilgisayardan çıkmaz; yerel Türkçe kurallarla sınıflandırılır. Uzak yapay zekâ bağlantısı ayrıca ve yalnızca süreç ortamında yapılandırılır:
 
 ```powershell
 $env:AI_API_URL="https://AI-SERVISI/v1/responses"
@@ -59,6 +59,17 @@ npm start
 ```
 
 API anahtarı veritabanına veya tarayıcıya yazılmaz. AI servisi etkin olsa bile içe aktarılan mesajlar otomatik gönderilmez. Her ileti için **AI ile analiz et** seçilir ve gönderim kapsamı onaylanır. E-posta ve telefon ifadeleri varsayılan olarak çağrıdan önce maskelenir.
+
+Responses API biçimiyle uyumlu bir model servisi aynı bilgisayarda çalışıyorsa anahtar gerekmeksizin kullanılabilir:
+
+```powershell
+$env:AI_API_URL="http://127.0.0.1:11434/v1/responses"
+$env:AI_MODEL="YEREL-MODEL-ADI"
+$env:AI_API_KEY=""
+npm start
+```
+
+Anahtarsız kullanım yalnızca `127.0.0.1`, `localhost` veya `::1` adreslerinde kabul edilir. Yerel model çağrılarında da görünür önizleme ve işlem başına onay korunur. Uzak bir URL için API anahtarı zorunludur.
 
 ## Mevcut kapsam
 
@@ -74,7 +85,7 @@ API anahtarı veritabanına veya tarayıcıya yazılmaz. AI servisi etkin olsa b
 - Birden fazla çocuk için birbirinden yalıtılmış profiller
 - Profil adını değiştirme ve profili tüm yerel verileriyle silme
 - Tek iletiyi veya seçili profile ait tüm yerel veriyi silme
-- İsteğe bağlı AI servis bağlantısı
+- İsteğe bağlı uzak AI veya anahtarsız geri-döngü yerel model bağlantısı
 - Profil bazında, kullanıcı yönetimli ad ve özel ifade maskelemesi
 - En fazla beş yerel kaynak seçen, açık onaylı ve kaynak kimlikli AI soru-cevap
 - Yerel veri ve takma ad seçeneklerini açıklayan ilk kurulum ekranı

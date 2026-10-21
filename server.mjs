@@ -5,7 +5,8 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
-import { analyzeMessage, cloudAiPreview, isCloudAiConfigured } from "./lib/analyze.mjs";
+import { analyzeMessage, cloudAiPreview, isAiConfigured } from "./lib/analyze.mjs";
+import { inspectAiConfiguration } from "./lib/ai-config.mjs";
 import { ConnectorValidationError, connectorDescriptors, normalizeConnectorItems } from "./lib/connectors/contract.mjs";
 import { buildDigest, DigestValidationError } from "./lib/digest.mjs";
 import { buildCalendar } from "./lib/calendar.mjs";
@@ -241,7 +242,8 @@ async function importItems(items, fallbackProfileId = defaultProfileId) {
 
 async function api(req, res, url) {
   if (req.method === "GET" && url.pathname === "/api/health") {
-    return json(res, 200, { ok: true, aiConfigured: isCloudAiConfigured(), cloudRequiresPerMessageConsent: true });
+    const ai = inspectAiConfiguration();
+    return json(res, 200, { ok: true, aiConfigured: ai.configured, aiMode: ai.mode, externalAiRequiresPerRequestConsent: true });
   }
   if (req.method === "GET" && url.pathname === "/api/messages") {
     const query = url.searchParams.get("q")?.trim();
@@ -263,7 +265,8 @@ async function api(req, res, url) {
       completed: db.prepare("SELECT value FROM settings WHERE key = 'setup_completed'").get()?.value === "1",
       profile,
       localOnlyByDefault: true,
-      aiConfigured: isCloudAiConfigured(),
+      aiConfigured: isAiConfigured(),
+      aiMode: inspectAiConfiguration().mode,
       k12PasswordStored: false
     });
   }
@@ -359,7 +362,7 @@ async function api(req, res, url) {
       redactionEnabled: process.env.AI_REDACT !== "false"
     });
     return json(res, 200, {
-      providerConfigured: isCloudAiConfigured(),
+      providerConfigured: isAiConfigured(),
       redactionEnabled: preview.redactionEnabled,
       customRedactionTerms: preview.customRedactionTerms,
       fields: preview.fields,
@@ -371,7 +374,7 @@ async function api(req, res, url) {
   if (req.method === "POST" && url.pathname === "/api/qa") {
     const payload = await bodyJson(req);
     if (payload.consent !== true) return json(res, 400, { error: "Soru için açık AI gönderim onayı gerekli" });
-    if (!isCloudAiConfigured()) return json(res, 409, { error: "Bulut AI servisi yapılandırılmamış" });
+    if (!isAiConfigured()) return json(res, 409, { error: "AI servisi yapılandırılmamış" });
     const profileId = resolveProfileId(payload.profileId);
     if (!Array.isArray(payload.sourceIds) || payload.sourceIds.length < 1 || payload.sourceIds.length > 5) throw new QaValidationError("Onaylanan kaynak listesi 1-5 ileti içermelidir");
     const sourceIds = [...new Set(payload.sourceIds.map(Number))];
@@ -416,6 +419,8 @@ async function api(req, res, url) {
   if (req.method === "POST" && analyzeMatch) {
     const payload = await bodyJson(req);
     const mode = payload.mode === "cloud" ? "cloud" : "local";
+    if (mode === "cloud" && payload.consent !== true) return json(res, 400, { error: "İleti için açık AI gönderim onayı gerekli" });
+    if (mode === "cloud" && !isAiConfigured()) return json(res, 409, { error: "AI servisi yapılandırılmamış" });
     const message = await runAnalysis(Number(analyzeMatch[1]), mode);
     return message ? json(res, 200, message) : json(res, 404, { error: "Mesaj bulunamadı" });
   }
@@ -423,7 +428,7 @@ async function api(req, res, url) {
   if (req.method === "GET" && previewMatch) {
     const message = getMessage(Number(previewMatch[1]));
     if (!message) return json(res, 404, { error: "Mesaj bulunamadı" });
-    if (!isCloudAiConfigured()) return json(res, 409, { error: "Bulut AI servisi yapılandırılmamış" });
+    if (!isAiConfigured()) return json(res, 409, { error: "AI servisi yapılandırılmamış" });
     const preview = cloudAiPreview(message, { redactTerms: getRedactionTerms(message.profileId) });
     return json(res, 200, {
       providerConfigured: true,

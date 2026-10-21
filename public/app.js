@@ -72,7 +72,9 @@ async function refresh(q = "") {
     fetch(`/api/digest?${profile}&period=${encodeURIComponent(period)}`).then(r => r.json())
   ]);
   aiConfigured = health.aiConfigured;
-  $("#ai-state").textContent = health.aiConfigured ? "AI hazır · onaylı" : "Yerel analiz";
+  $("#ai-state").textContent = health.aiConfigured
+    ? `${health.aiMode === "local" ? "Yerel model" : "Uzak AI"} hazır · onaylı`
+    : "Yerel kural analizi";
   $("#qa-ask").disabled = !health.aiConfigured;
   $("#qa-ask").title = health.aiConfigured ? "" : "Soru-cevap için isteğe bağlı AI servisi yapılandırılmalıdır";
   $("#total").textContent = dashboard.total;
@@ -302,7 +304,7 @@ feed.addEventListener("click", async event => {
     const response = await fetch(`/api/messages/${aiButton.dataset.id}/analyze`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ mode: "cloud" })
+      body: JSON.stringify({ mode: "cloud", consent: true })
     });
     const result = await response.json();
     if (!response.ok) alert(result.error ?? "AI analizi başarısız oldu.");

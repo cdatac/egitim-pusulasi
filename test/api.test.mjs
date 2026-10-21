@@ -45,7 +45,7 @@ test("sağlık, içe aktarma, analiz ve pano akışı", async t => {
   t.after(() => app.close());
 
   const health = await fetch(`${app.base}/api/health`).then(response => response.json());
-  assert.deepEqual(health, { ok: true, aiConfigured: false, cloudRequiresPerMessageConsent: true });
+  assert.deepEqual(health, { ok: true, aiConfigured: false, aiMode: "disabled", externalAiRequiresPerRequestConsent: true });
 
   const importResponse = await fetch(`${app.base}/api/messages`, {
     method: "POST",
@@ -203,15 +203,17 @@ test("yabancı web kaynağından localhost erişimini reddeder", async t => {
   assert.equal((await fetch(`${app.base}/api/dashboard`).then(value => value.json())).total, 0);
 });
 
-test("bulut AI yapılandırılsa bile yalnızca ileti başına onaylı çağrıda veri gönderir", async t => {
+test("anahtarsız yerel model bile yalnızca ileti başına onaylı çağrıda veri işler", async t => {
   let calls = 0;
   let receivedInput = "";
+  let receivedAuthorization;
   const mock = createServer(async (req, res) => {
     const chunks = [];
     for await (const chunk of req) chunks.push(chunk);
     const payload = JSON.parse(Buffer.concat(chunks).toString("utf8"));
     calls += 1;
     receivedInput = payload.input;
+    receivedAuthorization = req.headers.authorization;
     const sourceId = Number(payload.input.match(/ID: (\d+)/)?.[1]);
     const output = payload.input.includes("KAYNAKLAR:") ? {
       answer: "İletişim duyurusundaki numara kullanılmalıdır.",
@@ -236,11 +238,15 @@ test("bulut AI yapılandırılsa bile yalnızca ileti başına onaylı çağrıd
   const mockPort = mock.address().port;
   const app = await startServer({
     AI_API_URL: `http://127.0.0.1:${mockPort}/responses`,
-    AI_API_KEY: "test-key",
+    AI_API_KEY: "",
     AI_MODEL: "test-model",
     AI_REDACT: "true"
   });
   t.after(() => app.close());
+
+  const health = await fetch(`${app.base}/api/health`).then(response => response.json());
+  assert.equal(health.aiConfigured, true);
+  assert.equal(health.aiMode, "local");
 
   const [profile] = await fetch(`${app.base}/api/profiles`).then(response => response.json());
   const redactions = await fetch(`${app.base}/api/profiles/${profile.id}/redactions`, {
@@ -271,13 +277,22 @@ test("bulut AI yapılandırılsa bile yalnızca ileti başına onaylı çağrıd
   assert.equal(preview.customRedactionTerms, 1);
   assert.equal(calls, 0);
 
+  const deniedAnalysis = await fetch(`${app.base}/api/messages/${id}/analyze`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ mode: "cloud", consent: false })
+  });
+  assert.equal(deniedAnalysis.status, 400);
+  assert.equal(calls, 0);
+
   const analyzed = await fetch(`${app.base}/api/messages/${id}/analyze`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ mode: "cloud" })
+    body: JSON.stringify({ mode: "cloud", consent: true })
   }).then(response => response.json());
   assert.equal(calls, 1);
-  assert.equal(analyzed.analysis.provider, "yapay-zeka-maskeli");
+  assert.equal(analyzed.analysis.provider, "yerel-model-maskeli");
+  assert.equal(receivedAuthorization, undefined);
   assert.doesNotMatch(receivedInput, /ogretmen@example\.com|0532 123 45 67|Deniz/i);
   assert.doesNotMatch(receivedInput, /Çocuğum/);
   assert.match(receivedInput, /E-POSTA MASKELENDİ|TELEFON MASKELENDİ/);
@@ -315,7 +330,7 @@ test("bulut AI yapılandırılsa bile yalnızca ileti başına onaylı çağrıd
     body: JSON.stringify({ profileId: profile.id, question, sourceIds: qaPreview.sources.map(source => source.id), consent: true })
   }).then(response => response.json());
   assert.equal(calls, 2);
-  assert.equal(answer.provider, "yapay-zeka-maskeli");
+  assert.equal(answer.provider, "yerel-model-maskeli");
   assert.deepEqual(answer.citations, [id]);
   assert.deepEqual(answer.sources.map(source => source.id), [id]);
   assert.doesNotMatch(receivedInput, /Deniz|0532 123 45 67|Çocuğum/i);

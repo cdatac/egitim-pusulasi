@@ -11,9 +11,11 @@ Eğitim Pusulası çocukların okul verileriyle çalışır. Bu nedenle veri min
 - K12 parolası bu prototip tarafından saklanmaz.
 - İlk kurulum ekranı bu sınırları gösterir ve gerçek çocuk adı yerine takma ad kullanılmasını önerir.
 
-## İsteğe bağlı bulut AI
+## İsteğe bağlı AI servisi
 
-Kullanıcı `AI_API_URL`, `AI_API_KEY` ve `AI_MODEL` değişkenlerini kendisi ayarlasa bile içerik otomatik gönderilmez. Her ileti için ayrı **AI ile analiz et** işlemi ve gönderim onayı gerekir. Onay verilirse mesaj başlığı, gönderen, tarih ve gövde seçilen AI servisine analiz için gönderilir. Profil adı gönderilmez. E-posta ve telefon ifadeleri varsayılan olarak maskelenir. Ebeveyn ayrıca her profil için ad, öğretmen veya okul adı gibi özel ifadeler tanımlayabilir; bunların metindeki eşleşmeleri de çağrıdan önce maskelenir. API anahtarı tarayıcıya veya veritabanına yazılmaz.
+Kullanıcı `AI_API_URL` ve `AI_MODEL` değişkenlerini, uzak servis için ayrıca `AI_API_KEY` değerini kendisi ayarlasa bile içerik otomatik gönderilmez. Her ileti için ayrı **AI ile analiz et** işlemi ve gönderim onayı gerekir. Onay verilirse mesaj başlığı, gönderen, tarih ve gövde seçilen AI servisine analiz için gönderilir. Profil adı gönderilmez. E-posta ve telefon ifadeleri varsayılan olarak maskelenir. Ebeveyn ayrıca her profil için ad, öğretmen veya okul adı gibi özel ifadeler tanımlayabilir; bunların metindeki eşleşmeleri de çağrıdan önce maskelenir. API anahtarı tarayıcıya veya veritabanına yazılmaz.
+
+`127.0.0.1`, `localhost` veya `::1` üzerindeki Responses-uyumlu bir yerel model servisi API anahtarı olmadan kullanılabilir. Bu durumda istek aynı bilgisayarın geri-döngü ağına gider; yine de yerel servis kendi günlükleme ve saklama ayarlarına sahip olabileceğinden önizleme, maskeleme ve işlem başına onay kaldırılmaz. Geri-döngü dışındaki tüm AI adreslerinde API anahtarı zorunludur ve içerik seçilen üçüncü tarafın gizlilik koşullarına tabi olur.
 
 Arayüz, gönderilecek alanları, yaklaşık karakter sayısını, maskeleme durumunu ve etkin özel ifade sayısını çağrıdan önce gösterir. Özel maskeleme listesi yalnızca yerel veritabanında tutulur ve AI servisine liste olarak gönderilmez; yalnızca maskelenmiş metin gönderilir.
 

@@ -46,7 +46,7 @@
 - [x] Ödev, sınav, etkinlik, devamsızlık, ödeme ve malzeme çıkarma
 - [x] Takvim dışa aktarma
 - [x] Mesajlar üzerinde yerel kaynak seçimi, açık onay ve doğrulanmış atıflı soru-cevap
-- [ ] Bulut AI ve yerel model seçenekleri
+- [x] Bulut AI ve Responses-uyumlu geri-döngü yerel model seçenekleri
 - [x] Gönderilecek alanlar için görünür gizlilik önizlemesi ve ileti başına onay
 - [x] Profil bazında kullanıcı yönetimli özel ifade maskelemesi
 
