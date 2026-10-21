@@ -1,4 +1,5 @@
 import http from "node:http";
+import { createHash } from "node:crypto";
 import { readFile, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
@@ -46,6 +47,13 @@ db.exec(`
     provider TEXT NOT NULL,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
+  CREATE TABLE IF NOT EXISTS task_states (
+    message_id INTEGER NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+    task_key TEXT NOT NULL,
+    completed INTEGER NOT NULL DEFAULT 0 CHECK(completed IN (0, 1)),
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY(message_id, task_key)
+  );
 `);
 
 const messageColumns = db.prepare("PRAGMA table_info(messages)").all();
@@ -80,8 +88,28 @@ async function bodyJson(req) {
   return JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
 }
 
+function taskKey(text, occurrence) {
+  return createHash("sha256").update(`${String(text).trim().toLocaleLowerCase("tr-TR")}\0${occurrence}`).digest("hex").slice(0, 16);
+}
+
+function actionItemsWithState(messageId, rawItems) {
+  const states = new Map(db.prepare("SELECT task_key, completed FROM task_states WHERE message_id = ?").all(messageId).map(row => [row.task_key, Boolean(row.completed)]));
+  const occurrences = new Map();
+  return rawItems.map(item => typeof item === "string" ? { text: item } : item).map(item => {
+    const text = String(item?.text ?? "").trim();
+    if (!text) return null;
+    const normalized = text.toLocaleLowerCase("tr-TR");
+    const occurrence = occurrences.get(normalized) ?? 0;
+    occurrences.set(normalized, occurrence + 1);
+    const key = taskKey(text, occurrence);
+    const completed = states.get(key) ?? false;
+    return { ...item, text, key, completed, status: completed ? "tamamlandı" : "açık" };
+  }).filter(Boolean);
+}
+
 function rowToMessage(row) {
   const storedPrefix = `${row.profile_id}:`;
+  const actionItems = row.summary ? actionItemsWithState(row.id, JSON.parse(row.action_items)) : [];
   return {
     id: row.id,
     profileId: row.profile_id,
@@ -99,7 +127,7 @@ function rowToMessage(row) {
       summary: row.summary,
       category: row.category,
       priority: row.priority,
-      actionItems: JSON.parse(row.action_items),
+      actionItems,
       dates: JSON.parse(row.dates),
       confidence: row.confidence,
       provider: row.provider,
@@ -135,6 +163,13 @@ async function runAnalysis(id, mode = "local") {
   `).run(id, analysis.summary, analysis.category, analysis.priority,
     JSON.stringify(analysis.actionItems), JSON.stringify(analysis.dates),
     analysis.confidence, analysis.provider);
+  const currentKeys = actionItemsWithState(id, analysis.actionItems).map(item => item.key);
+  if (currentKeys.length) {
+    const placeholders = currentKeys.map(() => "?").join(",");
+    db.prepare(`DELETE FROM task_states WHERE message_id = ? AND task_key NOT IN (${placeholders})`).run(id, ...currentKeys);
+  } else {
+    db.prepare("DELETE FROM task_states WHERE message_id = ?").run(id);
+  }
   return getMessage(id);
 }
 
@@ -197,7 +232,7 @@ async function api(req, res, url) {
   if (req.method === "GET" && url.pathname === "/api/export") {
     const items = db.prepare(`${selectSql} ORDER BY COALESCE(m.occurred_at, m.created_at) DESC`).all().map(rowToMessage);
     return json(res, 200, {
-      schemaVersion: 2,
+      schemaVersion: 3,
       exportedAt: new Date().toISOString(),
       product: "Eğitim Pusulası",
       profiles: db.prepare("SELECT id, name, is_default AS isDefault, created_at AS createdAt FROM profiles ORDER BY id").all(),
@@ -243,6 +278,22 @@ async function api(req, res, url) {
       characters: preview.characters
     });
   }
+  const taskMatch = url.pathname.match(/^\/api\/messages\/(\d+)\/tasks\/([a-f0-9]{16})$/);
+  if (req.method === "PATCH" && taskMatch) {
+    const message = getMessage(Number(taskMatch[1]));
+    if (!message) return json(res, 404, { error: "Mesaj bulunamadı" });
+    const task = message.analysis?.actionItems.find(item => item.key === taskMatch[2]);
+    if (!task) return json(res, 404, { error: "Görev bulunamadı" });
+    const payload = await bodyJson(req);
+    if (typeof payload.completed !== "boolean") return json(res, 400, { error: "completed alanı boolean olmalıdır" });
+    if (payload.completed) {
+      db.prepare(`INSERT INTO task_states(message_id, task_key, completed, updated_at) VALUES (?, ?, 1, CURRENT_TIMESTAMP)
+        ON CONFLICT(message_id, task_key) DO UPDATE SET completed = 1, updated_at = CURRENT_TIMESTAMP`).run(message.id, task.key);
+    } else {
+      db.prepare("DELETE FROM task_states WHERE message_id = ? AND task_key = ?").run(message.id, task.key);
+    }
+    return json(res, 200, getMessage(message.id));
+  }
   const deleteMatch = url.pathname.match(/^\/api\/messages\/(\d+)$/);
   if (req.method === "DELETE" && deleteMatch) {
     const id = Number(deleteMatch[1]);
@@ -262,8 +313,10 @@ async function api(req, res, url) {
     const args = profileId ? [profileId] : [];
     const counts = db.prepare(`SELECT COUNT(*) total, SUM(CASE WHEN a.priority='yüksek' THEN 1 ELSE 0 END) urgent FROM messages m LEFT JOIN analyses a ON a.message_id=m.id${profileWhere}`).get(...args);
     const categories = db.prepare(`SELECT COALESCE(a.category, 'İşlenmedi') category, COUNT(*) count FROM messages m LEFT JOIN analyses a ON a.message_id=m.id${profileWhere} GROUP BY category ORDER BY count DESC`).all(...args);
+    const taskCount = db.prepare(`${selectSql}${profileWhere}`).all(...args).map(rowToMessage)
+      .reduce((sum, message) => sum + (message.analysis?.actionItems.filter(task => !task.completed).length ?? 0), 0);
     const recent = db.prepare(`${selectSql}${profileWhere} ORDER BY COALESCE(m.occurred_at, m.created_at) DESC LIMIT 5`).all(...args).map(rowToMessage);
-    return json(res, 200, { total: Number(counts.total ?? 0), urgent: Number(counts.urgent ?? 0), categories, recent });
+    return json(res, 200, { total: Number(counts.total ?? 0), urgent: Number(counts.urgent ?? 0), taskCount, categories, recent });
   }
   if (req.method === "GET" && url.pathname === "/api/digest") {
     const profileId = resolveProfileId(url.searchParams.get("profileId"));

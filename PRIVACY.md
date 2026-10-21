@@ -5,7 +5,7 @@ Eğitim Pusulası çocukların okul verileriyle çalışır. Bu nedenle veri min
 ## Varsayılan davranış
 
 - Uygulama yalnızca kullanıcının bilgisayarında `127.0.0.1` üzerinden çalışır.
-- Mesajlar ve kullanıcının verdiği çocuk profil adları yerel SQLite veritabanında saklanır.
+- Mesajlar, kullanıcının verdiği çocuk profil adları ve ebeveynin işaretlediği görev durumları yerel SQLite veritabanında saklanır.
 - Her profilin iletileri, panosu, dışa aktarımı ve silme işlemleri birbirinden ayrıdır.
 - Yerel sınıflandırma kullanıldığında mesajlar üçüncü tarafa gönderilmez.
 - K12 parolası bu prototip tarafından saklanmaz.

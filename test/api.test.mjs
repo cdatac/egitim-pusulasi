@@ -74,6 +74,7 @@ test("sağlık, içe aktarma, analiz ve pano akışı", async t => {
   const dashboard = await fetch(`${app.base}/api/dashboard`).then(response => response.json());
   assert.equal(dashboard.total, 1);
   assert.equal(dashboard.urgent, 1);
+  assert.equal(dashboard.taskCount, 1);
 
   const digest = await fetch(`${app.base}/api/digest?profileId=${imported.items[0].profileId}&period=week&anchor=2026-10-21`).then(response => response.json());
   assert.equal(digest.sourceCount, 1);
@@ -89,10 +90,38 @@ test("sağlık, içe aktarma, analiz ve pano akışı", async t => {
   assert.match(search[0].body, /çalışma kağıdı/);
 
   const exported = await fetch(`${app.base}/api/export`).then(response => response.json());
-  assert.equal(exported.schemaVersion, 2);
+  assert.equal(exported.schemaVersion, 3);
   assert.equal(exported.product, "Eğitim Pusulası");
   assert.equal(exported.items.length, 1);
   assert.equal(exported.items[0].analysis.category, "Ödev");
+
+  const task = imported.items[0].analysis.actionItems[0];
+  assert.match(task.key, /^[a-f0-9]{16}$/);
+  assert.equal(task.completed, false);
+  const completed = await fetch(`${app.base}/api/messages/${imported.items[0].id}/tasks/${task.key}`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ completed: true })
+  }).then(response => response.json());
+  assert.equal(completed.analysis.actionItems[0].completed, true);
+  const reanalyzed = await fetch(`${app.base}/api/messages/${imported.items[0].id}/analyze`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ mode: "local" })
+  }).then(response => response.json());
+  assert.equal(reanalyzed.analysis.actionItems[0].completed, true);
+  const completedExport = await fetch(`${app.base}/api/export`).then(response => response.json());
+  assert.equal(completedExport.items[0].analysis.actionItems[0].completed, true);
+  const completedDigest = await fetch(`${app.base}/api/digest?profileId=${imported.items[0].profileId}&period=week&anchor=2026-10-21`).then(response => response.json());
+  assert.equal(completedDigest.taskCount, 0);
+  const completedDashboard = await fetch(`${app.base}/api/dashboard?profileId=${imported.items[0].profileId}`).then(response => response.json());
+  assert.equal(completedDashboard.taskCount, 0);
+  const missingTask = await fetch(`${app.base}/api/messages/${imported.items[0].id}/tasks/0000000000000000`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ completed: true })
+  });
+  assert.equal(missingTask.status, 404);
 
   const deleted = await fetch(`${app.base}/api/messages/${imported.items[0].id}`, { method: "DELETE" }).then(response => response.json());
   assert.equal(deleted.deleted, 1);

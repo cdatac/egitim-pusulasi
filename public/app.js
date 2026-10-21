@@ -13,15 +13,12 @@ function esc(value = "") {
 function render() {
   if (!messages.length) {
     feed.replaceChildren($("#empty-template").content.cloneNode(true));
-    $("#tasks").textContent = "0";
     return;
   }
-  const taskCount = messages.reduce((sum, item) => sum + (item.analysis?.actionItems?.length ?? 0), 0);
-  $("#tasks").textContent = taskCount;
   feed.innerHTML = messages.map(item => {
     const analysis = item.analysis;
     const dates = analysis?.dates?.map(date => `<span class="chip date">${esc(date.value)}</span>`).join("") ?? "";
-    const tasks = analysis?.actionItems?.map(task => `<li>${esc(task.text)}</li>`).join("") ?? "";
+    const tasks = analysis?.actionItems?.map(task => `<li class="${task.completed ? "completed" : ""}"><label><input class="task-toggle" type="checkbox" data-message-id="${item.id}" data-task-key="${esc(task.key)}" ${task.completed ? "checked" : ""}> <span>${esc(task.text)}</span></label></li>`).join("") ?? "";
     return `<article id="message-${item.id}" class="message ${analysis?.priority === "yüksek" ? "high" : ""}">
       <div class="message-head">
         <div><span class="chip">${esc(analysis?.category ?? item.kind)}</span>${dates}</div>
@@ -47,7 +44,7 @@ function renderDigest() {
   }
   const categories = currentDigest.categories.map(item => `<span class="chip">${esc(item.category)} · ${item.count}</span>`).join("");
   const items = currentDigest.items.map(item => {
-    const tasks = item.actionItems.length ? `${item.actionItems.length} görev` : "Görev yok";
+    const tasks = item.openTaskCount ? `${item.openTaskCount} açık görev` : "Açık görev yok";
     const dates = item.dates.map(date => esc(date.value)).join(", ");
     return `<a class="digest-item" href="#message-${item.messageId}" data-message-id="${item.messageId}">
       <span><strong>${esc(item.title)}</strong><small>${esc(item.category)} · ${tasks}${dates ? ` · ${dates}` : ""}</small></span>
@@ -78,6 +75,7 @@ async function refresh(q = "") {
   $("#ai-state").textContent = health.aiConfigured ? "AI hazır · onaylı" : "Yerel analiz";
   $("#total").textContent = dashboard.total;
   $("#urgent").textContent = dashboard.urgent;
+  $("#tasks").textContent = dashboard.taskCount;
   messages = list;
   currentDigest = digest;
   $("#digest-title").textContent = digest.label;
@@ -161,6 +159,18 @@ $("#add-profile").addEventListener("click", async () => {
 });
 
 feed.addEventListener("click", async event => {
+  const taskToggle = event.target.closest(".task-toggle");
+  if (taskToggle) {
+    taskToggle.disabled = true;
+    const response = await fetch(`/api/messages/${taskToggle.dataset.messageId}/tasks/${taskToggle.dataset.taskKey}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ completed: taskToggle.checked })
+    });
+    if (!response.ok) alert("Görev durumu kaydedilemedi.");
+    await refresh($("#search").value);
+    return;
+  }
   const aiButton = event.target.closest(".ai-message");
   if (aiButton) {
     const previewResponse = await fetch(`/api/messages/${aiButton.dataset.id}/ai-preview`);

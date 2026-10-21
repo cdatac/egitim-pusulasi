@@ -20,7 +20,7 @@ const message = (id, occurredAt, options = {}) => ({
 test("haftalık özeti dönem, görev ve kaynak kimlikleriyle üretir", () => {
   const result = buildDigest([
     message(1, "2026-10-21T08:00:00+03:00", { category: "Ödev", priority: "yüksek", actionItems: [{ text: "Getir", status: "açık" }], dates: [{ value: "Cuma", certainty: "metinde_geçiyor" }] }),
-    message(2, "2026-10-15T12:00:00+03:00", { category: "Etkinlik" }),
+    message(2, "2026-10-15T12:00:00+03:00", { category: "Etkinlik", actionItems: [{ text: "Tamamlandı", status: "tamamlandı", completed: true }] }),
     message(3, "2026-10-14T23:59:59+03:00", { category: "Sınav" })
   ], { period: "week", anchor: "2026-10-21" });
 
@@ -30,6 +30,7 @@ test("haftalık özeti dönem, görev ve kaynak kimlikleriyle üretir", () => {
   assert.equal(result.taskCount, 1);
   assert.deepEqual(result.items.map(item => item.messageId), [1, 2]);
   assert.equal(result.items[0].dates[0].value, "Cuma");
+  assert.equal(result.items[1].openTaskCount, 0);
 });
 
 test("bugün görünümü yalnızca aynı takvim günündeki iletileri içerir", () => {

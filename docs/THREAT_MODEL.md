@@ -4,7 +4,7 @@ Bu belge Eğitim Pusulası'nın yerel web uygulaması, okul sistemi bağlayıcı
 
 ## Korunan varlıklar
 
-- Çocuğa ait duyuru, mesaj, görev, tarih ve bunlardan üretilen analizler
+- Çocuğa ait duyuru, mesaj, görev, tarih, ebeveynin görev tamamlama durumu ve bunlardan üretilen analizler
 - Çocuk profil adları
 - Okul sistemi parolası, oturum çerezi ve erişim belirteçleri
 - İsteğe bağlı AI servisinin API anahtarı
