@@ -1,4 +1,4 @@
-:root { color-scheme: light; --ink:#17201d; --muted:#68736e; --paper:#f5f3ec; --panel:#fffdf7; --line:#dedbd0; --green:#1f6b51; --mint:#dcebe3; --orange:#b8552b; }
+:root { color-scheme: light; --ink:#17201d; --muted:#626d68; --paper:#f5f3ec; --panel:#fffdf7; --line:#dedbd0; --green:#1f6b51; --mint:#dcebe3; --orange:#b8552b; }
 * { box-sizing:border-box; }
 body { margin:0; font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background:var(--paper); color:var(--ink); }
 .skip-link { position:fixed; z-index:10; top:8px; left:8px; transform:translateY(-160%); background:var(--ink); color:white; border-radius:8px; padding:10px 14px; }
@@ -92,5 +92,5 @@ details p { white-space:pre-wrap; margin-top:12px; }
 .empty { grid-column:1/-1; display:grid; place-items:center; gap:8px; min-height:220px; border:1px dashed #b8b8ad; border-radius:20px; color:var(--muted); }
 .empty strong { color:var(--ink); }
 code { background:#eceae2; border-radius:6px; padding:2px 5px; }
-@media (max-width:720px) { .composer,.feed { grid-template-columns:1fr; } .composer .row { grid-column:auto; flex-wrap:wrap; } .stats,.digest-counts { grid-template-columns:1fr; } header,.toolbar,.digest-head { align-items:flex-start; flex-direction:column; } .profile-bar { align-items:flex-start; flex-wrap:wrap; } .profile-bar span { width:100%; margin-left:0; } .toolbar-actions { width:100%; flex-wrap:wrap; justify-content:flex-start; } .toolbar input { max-width:none; } .digest-item,.qa-controls { align-items:stretch; flex-direction:column; gap:8px; } }
+@media (max-width:720px) { .composer,.feed { grid-template-columns:1fr; } .composer .row { grid-column:auto; flex-wrap:wrap; } .stats { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; } .stats article { padding:14px 10px; } .stats span { font-size:2rem; } .stats small { display:block; line-height:1.25; } .digest-counts { grid-template-columns:1fr; } header,.toolbar,.digest-head { align-items:flex-start; flex-direction:column; } .profile-bar { align-items:flex-start; flex-wrap:wrap; } .profile-bar span { width:100%; margin-left:0; } .toolbar-actions { width:100%; flex-wrap:wrap; justify-content:flex-start; } .toolbar input { max-width:none; } .digest-item,.qa-controls { align-items:stretch; flex-direction:column; gap:8px; } }
 @media (prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto !important; transition-duration:.01ms !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; } }

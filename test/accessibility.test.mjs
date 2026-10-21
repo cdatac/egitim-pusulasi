@@ -22,6 +22,25 @@ test("statik form kontrollerinin görünür veya ekran okuyucu etiketi vardır",
   for (const id of controls) assert.match(html, new RegExp(`<label[^>]*for="${id}"`), `${id} etiketsiz`);
 });
 
+test("ana arka plandaki ikincil metin WCAG AA kontrast eşiğini karşılar", () => {
+  const color = name => css.match(new RegExp(`--${name}:#([0-9a-f]{6})`, "i"))?.[1];
+  const luminance = hex => {
+    const channels = hex.match(/../g).map(value => Number.parseInt(value, 16) / 255);
+    const linear = channels.map(value => value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
+  };
+  const contrast = (foreground, background) => {
+    const values = [luminance(foreground), luminance(background)].sort((a, b) => b - a);
+    return (values[0] + 0.05) / (values[1] + 0.05);
+  };
+
+  assert.ok(contrast(color("muted"), color("paper")) >= 4.5);
+});
+
+test("dar ekranda özet kartları kompakt bir satırda kalır", () => {
+  assert.match(css, /@media \(max-width:720px\)[\s\S]*\.stats \{ grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+});
+
 test("klavye odağı, azaltılmış hareket ve renkten bağımsız öncelik sunulur", () => {
   assert.match(css, /:focus-visible/);
   assert.match(css, /prefers-reduced-motion:reduce/);

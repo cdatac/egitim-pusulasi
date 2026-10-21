@@ -78,7 +78,7 @@
         </div>
         <div class="qa-controls">
           <label class="sr-only" for="qa-question">Okul iletileri hakkındaki soru</label>
-          <input id="qa-question" type="text" maxlength="500" aria-describedby="qa-help" placeholder="Örneğin: Bu hafta teslim edilecek ödev var mı?">
+          <input id="qa-question" type="text" maxlength="500" aria-label="Okul iletileri hakkındaki soru" aria-describedby="qa-help" placeholder="Örneğin: Bu hafta teslim edilecek ödev var mı?">
           <button id="qa-ask" disabled>Kaynakları bul ve sor</button>
         </div>
         <div id="qa-result" role="status" aria-live="polite"></div>
@@ -91,7 +91,7 @@
           <p id="import-help">İlk satır başlık kabul edilir. Birden fazla iletiyi <code>---</code> satırıyla ayırabilirsiniz.</p>
         </div>
         <label class="sr-only" for="import-text">Duyuru veya mesaj metni</label>
-        <textarea id="import-text" aria-describedby="import-help" placeholder="Fen projesi\nCuma gününe kadar proje teslim edilecektir. Karton ve LED getiriniz."></textarea>
+        <textarea id="import-text" aria-label="Duyuru veya mesaj metni" aria-describedby="import-help" placeholder="Fen projesi\nCuma gününe kadar proje teslim edilecektir. Karton ve LED getiriniz."></textarea>
         <div class="row">
           <button id="import">İşle ve ekle</button>
           <button id="demo" class="ghost">Örnek yükle</button>
@@ -106,7 +106,7 @@
         </div>
         <div class="toolbar-actions">
           <label class="sr-only" for="search">Mesajlarda ara</label>
-          <input id="search" type="search" placeholder="Mesajlarda ara…">
+          <input id="search" type="search" aria-label="Mesajlarda ara" placeholder="Mesajlarda ara…">
           <button id="calendar" class="ghost">Takvimi indir</button>
           <button id="export" class="ghost">Veriyi indir</button>
           <button id="clear" class="danger">Bu profilin iletilerini temizle</button>
