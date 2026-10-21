@@ -1,0 +1,71 @@
+name: Portable packages
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-latest
+          - ubuntu-latest
+          - macos-14
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run check
+      - run: npm test
+      - name: Require project license before distributable artifacts
+        shell: bash
+        run: test -f LICENSE || { echo "Portable artifacts require a selected project LICENSE."; exit 1; }
+      - name: Prepare package metadata
+        shell: bash
+        run: |
+          node_version="$(node -p 'process.versions.node')"
+          platform="$(node -p 'process.platform')"
+          architecture="$(node -p 'process.arch')"
+          package_name="egitim-pusulasi-v$(node -p "require('./package.json').version")-${platform}-${architecture}"
+          mkdir -p tmp dist
+          node -e "fetch('https://raw.githubusercontent.com/nodejs/node/v' + process.versions.node + '/LICENSE').then(async response => { if (!response.ok) throw new Error('Node lisansı indirilemedi: ' + response.status); const text = await response.text(); if (text.length < 1000) throw new Error('Node lisansı beklenenden kısa'); require('node:fs').writeFileSync('tmp/NODE-LICENSE', text); })"
+          echo "PACKAGE_NAME=$package_name" >> "$GITHUB_ENV"
+          echo "NODE_BINARY=$(node -p 'process.execPath')" >> "$GITHUB_ENV"
+          echo "NODE_VERSION=$node_version" >> "$GITHUB_ENV"
+      - name: Build portable directory
+        shell: bash
+        run: node scripts/build-portable.mjs --output="dist/$PACKAGE_NAME" --node="$NODE_BINARY" --node-license="tmp/NODE-LICENSE"
+      - name: Verify bundled runtime
+        shell: bash
+        run: |
+          if [ "$(node -p 'process.platform')" = "win32" ]; then runtime="dist/$PACKAGE_NAME/runtime/node.exe"; else runtime="dist/$PACKAGE_NAME/runtime/node"; fi
+          "$runtime" --check "dist/$PACKAGE_NAME/app/server.mjs"
+          DATA_DIR="$RUNNER_TEMP/egitim-pusulasi-portable-data" "$runtime" "dist/$PACKAGE_NAME/app/scripts/doctor.mjs" --json
+      - name: Archive Windows package
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Compress-Archive -LiteralPath "dist/$env:PACKAGE_NAME" -DestinationPath "dist/$env:PACKAGE_NAME.zip"
+      - name: Archive Unix package
+        if: runner.os != 'Windows'
+        shell: bash
+        run: tar -C dist -czf "dist/$PACKAGE_NAME.tar.gz" "$PACKAGE_NAME"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: portable-${{ runner.os }}-${{ runner.arch }}
+          path: |
+            dist/*.zip
+            dist/*.tar.gz
+          if-no-files-found: error
+          retention-days: 7

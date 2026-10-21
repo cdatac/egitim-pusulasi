@@ -53,7 +53,8 @@
 ### 3. Herkes için dağıtım
 
 - [x] Windows çift tıklama ve macOS/Linux tek komut başlatıcısı
-- [ ] Node.js gerektirmeyen imzalı masaüstü paketleri
+- [x] Node.js çalışma zamanını içeren Windows/Linux/macOS taşınabilir paket üretimi
+- [ ] Taşınabilir paketlerin platform kod imzası ve resmî sürüm dağıtımı
 - [ ] Güvenli Docker Compose seçeneği (yapılandırma doğrulandı; gerçek imaj derlemesi Docker motoru bekliyor)
 - [x] Başlangıç ortamı denetleyicisi
 - [x] Yerel veri, takma ad ve AI onayı açıklamalı ilk kurulum sihirbazı

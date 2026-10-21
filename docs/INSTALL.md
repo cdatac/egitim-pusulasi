@@ -2,6 +2,16 @@
 
 Eğitim Pusulası ön sürümü çalışma zamanı paketi indirmez ve yönetici yetkisi istemez. Node.js 24 veya üzeri kullanır; başka npm bağımlılığı yoktur.
 
+GitHub'daki **Portable packages** iş akışı Windows, Linux ve macOS için Node çalışma zamanını içeren deneme paketleri üretir. Bu paketler ayrıca Node.js kurulumu istemez; ancak henüz kod imzalı olmadıkları için genel sürüm dosyası olarak yayımlanmaz. Her paket eşleşen Node lisansını ve çalışma zamanı özetini içerir. İmzalı resmî paketler yayınlandığında bu bölüm indirme bağlantılarıyla güncellenecektir.
+
+İş akışı proje lisansı seçilmeden dağıtılabilir paket üretmeyi reddeder. Yerel geliştirme duman testi için paket oluşturucuya çıktı dizini, Node ikilisi ve o Node sürümünün lisans dosyası açıkça verilir:
+
+```powershell
+npm run build:portable -- --output=tmp/portable --node="C:\Program Files\nodejs\node.exe" --node-license="C:\YOL\NODE-LICENSE"
+```
+
+Oluşturucu mevcut bir çıktı dizininin üzerine yazmaz; `data/`, Git geçmişi ve geliştirme çalışma dosyaları açık dosya listesine dahil değildir.
+
 ## Windows
 
 1. Node.js 24 veya üzerini [resmî Node.js indirme sayfasından](https://nodejs.org/en/download) kurun.
