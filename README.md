@@ -15,7 +15,7 @@ Node.js 24 veya üzeri gerekir. Ek paket kurulumu yoktur.
 
 Başlatıcı İnternet'ten yazılım indirmez. Node.js eksikse yalnızca resmî indirme adresini gösterir.
 
-Ayrıntılı kurulum, güncelleme, yedekleme ve kaldırma adımları için [docs/INSTALL.md](docs/INSTALL.md) belgesine bakın.
+Ayrıntılı kurulum, güncelleme, yedekleme ve kaldırma adımları için [kurulum belgesine](docs/INSTALL.md); günlük kullanım için [Türkçe kullanıcı rehberine](docs/USER_GUIDE.md) bakın.
 
 ### macOS veya Linux
 

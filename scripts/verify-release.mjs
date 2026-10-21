@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const ISSUE_CONFIG = ".github/ISSUE_TEMPLATE/config.yml";
-const REQUIRED_FILES = ["README.md", "PRIVACY.md", "SECURITY.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "docs/THREAT_MODEL.md", ISSUE_CONFIG];
+const REQUIRED_FILES = ["README.md", "PRIVACY.md", "SECURITY.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "docs/THREAT_MODEL.md", "docs/USER_GUIDE.md", ISSUE_CONFIG];
 const LICENSE_FILES = ["LICENSE", "LICENSE.md", "COPYING"];
 
 export function evaluateRelease({ tag, packageVersion, files, repositoryMetadataReady = true }) {

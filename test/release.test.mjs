@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { evaluateRelease } from "../scripts/verify-release.mjs";
 
-const required = new Set(["README.md", "PRIVACY.md", "SECURITY.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "docs/THREAT_MODEL.md", ".github/ISSUE_TEMPLATE/config.yml", "LICENSE"]);
+const required = new Set(["README.md", "PRIVACY.md", "SECURITY.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "docs/THREAT_MODEL.md", "docs/USER_GUIDE.md", ".github/ISSUE_TEMPLATE/config.yml", "LICENSE"]);
 
 test("eşleşen semver etiketi ve lisansla sürümü hazır kabul eder", () => {
   assert.deepEqual(evaluateRelease({ tag: "v0.1.0", packageVersion: "0.1.0", files: required }), { ok: true, errors: [] });
