@@ -27,6 +27,7 @@ function render() {
       <p class="summary">${esc(analysis?.summary ?? item.body)}</p>
       ${tasks ? `<div class="actions"><strong>Yapılacaklar</strong><ul>${tasks}</ul></div>` : ""}
       <details><summary>Kaynak iletiyi göster</summary><p>${esc(item.body)}</p><small>${esc(item.sender ?? "Kaynak belirtilmedi")} · ${esc(analysis?.provider ?? "işlenmedi")}</small></details>
+      <button class="delete-message" data-id="${item.id}" aria-label="${esc(item.title)} iletisini sil">İletiyi sil</button>
     </article>`;
   }).join("");
 }
@@ -70,6 +71,34 @@ let timer;
 $("#search").addEventListener("input", event => {
   clearTimeout(timer);
   timer = setTimeout(() => refresh(event.target.value), 180);
+});
+
+feed.addEventListener("click", async event => {
+  const button = event.target.closest(".delete-message");
+  if (!button) return;
+  if (!confirm("Bu ileti ve analizi kalıcı olarak silinsin mi?")) return;
+  const response = await fetch(`/api/messages/${button.dataset.id}`, { method: "DELETE" });
+  if (!response.ok) return alert("İleti silinemedi.");
+  await refresh($("#search").value);
+});
+
+$("#export").addEventListener("click", async () => {
+  const response = await fetch("/api/export");
+  if (!response.ok) return alert("Veri dışa aktarılamadı.");
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `egitim-pusulasi-${new Date().toISOString().slice(0, 10)}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+});
+
+$("#clear").addEventListener("click", async () => {
+  if (!confirm("Tüm yerel mesajlar ve analizler kalıcı olarak silinsin mi? Bu işlem geri alınamaz.")) return;
+  const response = await fetch("/api/messages", { method: "DELETE" });
+  if (!response.ok) return alert("Veriler temizlenemedi.");
+  await refresh();
 });
 
 refresh().catch(error => {

@@ -25,6 +25,7 @@
 - [x] Hassas dosyalar için `.gitignore`
 - [x] Birim ve API testleri
 - [x] Yapılandırma şeması ve `.env.example`
+- [x] Veri dışa aktarma ve yerel veri silme kontrolleri
 
 ### 1. K12 salt okunur bağlayıcı
 

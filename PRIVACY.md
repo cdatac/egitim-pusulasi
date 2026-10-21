@@ -21,4 +21,4 @@ Proje telemetri, reklam tanımlayıcısı veya davranışsal profil toplamaz. Pr
 
 ## Kullanıcının kontrolü
 
-Planlanan kararlı sürüm; veri dışa aktarma, seçili iletiyi silme ve tüm yerel veriyi temizleme işlevleri sunacaktır.
+Mevcut sürüm; JSON veri dışa aktarma, seçili iletiyi silme ve tüm yerel mesajlarla analizleri temizleme işlevleri sunar.

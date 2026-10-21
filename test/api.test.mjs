@@ -75,6 +75,16 @@ test("sağlık, içe aktarma, analiz ve pano akışı", async t => {
   const search = await fetch(`${app.base}/api/messages?q=çalışma`).then(response => response.json());
   assert.equal(search.length, 1);
   assert.match(search[0].body, /çalışma kağıdı/);
+
+  const exported = await fetch(`${app.base}/api/export`).then(response => response.json());
+  assert.equal(exported.schemaVersion, 1);
+  assert.equal(exported.product, "Eğitim Pusulası");
+  assert.equal(exported.items.length, 1);
+  assert.equal(exported.items[0].analysis.category, "Ödev");
+
+  const deleted = await fetch(`${app.base}/api/messages/${imported.items[0].id}`, { method: "DELETE" }).then(response => response.json());
+  assert.equal(deleted.deleted, 1);
+  assert.equal((await fetch(`${app.base}/api/messages`).then(response => response.json())).length, 0);
 });
 
 test("boş gövdeyi içe aktarmaz", async t => {
@@ -86,4 +96,31 @@ test("boş gövdeyi içe aktarmaz", async t => {
     body: JSON.stringify({ title: "Boş", body: "" })
   });
   assert.equal((await response.json()).imported, 0);
+});
+
+test("tüm yerel veriyi temizler", async t => {
+  const app = await startServer();
+  t.after(() => app.close());
+  for (const externalId of ["a", "b"]) {
+    await fetch(`${app.base}/api/messages`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ source: "test", externalId, title: externalId, body: `${externalId} mesajı` })
+    });
+  }
+  const cleared = await fetch(`${app.base}/api/messages`, { method: "DELETE" }).then(response => response.json());
+  assert.equal(cleared.deleted, 2);
+  assert.equal((await fetch(`${app.base}/api/dashboard`).then(response => response.json())).total, 0);
+});
+
+test("yabancı web kaynağından localhost erişimini reddeder", async t => {
+  const app = await startServer();
+  t.after(() => app.close());
+  const response = await fetch(`${app.base}/api/messages`, {
+    method: "POST",
+    headers: { "content-type": "application/json", origin: "https://kotu-ornek.invalid" },
+    body: JSON.stringify({ title: "İstenmeyen", body: "Bu kayıt oluşmamalı" })
+  });
+  assert.equal(response.status, 403);
+  assert.equal((await fetch(`${app.base}/api/dashboard`).then(value => value.json())).total, 0);
 });

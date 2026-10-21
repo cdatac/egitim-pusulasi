@@ -11,6 +11,7 @@ const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : pat
 await mkdir(DATA_DIR, { recursive: true });
 const db = new DatabaseSync(path.join(DATA_DIR, "egitim-pusulasi.db"));
 db.exec(`
+  PRAGMA foreign_keys = ON;
   PRAGMA journal_mode = WAL;
   CREATE TABLE IF NOT EXISTS messages (
     id INTEGER PRIMARY KEY,
@@ -40,7 +41,13 @@ db.exec(`
 
 function json(res, status, value) {
   const body = JSON.stringify(value);
-  res.writeHead(status, { "content-type": "application/json; charset=utf-8", "content-length": Buffer.byteLength(body) });
+  res.writeHead(status, {
+    "content-type": "application/json; charset=utf-8",
+    "content-length": Buffer.byteLength(body),
+    "cache-control": "no-store",
+    "x-content-type-options": "nosniff",
+    "referrer-policy": "no-referrer"
+  });
   res.end(body);
 }
 
@@ -119,6 +126,15 @@ async function api(req, res, url) {
       : db.prepare(`${selectSql} ORDER BY COALESCE(m.occurred_at, m.created_at) DESC`).all();
     return json(res, 200, rows.map(rowToMessage));
   }
+  if (req.method === "GET" && url.pathname === "/api/export") {
+    const items = db.prepare(`${selectSql} ORDER BY COALESCE(m.occurred_at, m.created_at) DESC`).all().map(rowToMessage);
+    return json(res, 200, {
+      schemaVersion: 1,
+      exportedAt: new Date().toISOString(),
+      product: "Eğitim Pusulası",
+      items
+    });
+  }
   if (req.method === "POST" && url.pathname === "/api/messages") {
     const payload = await bodyJson(req);
     const items = Array.isArray(payload.items) ? payload.items : [payload];
@@ -141,6 +157,16 @@ async function api(req, res, url) {
     const message = await runAnalysis(Number(analyzeMatch[1]));
     return message ? json(res, 200, message) : json(res, 404, { error: "Mesaj bulunamadı" });
   }
+  const deleteMatch = url.pathname.match(/^\/api\/messages\/(\d+)$/);
+  if (req.method === "DELETE" && deleteMatch) {
+    const id = Number(deleteMatch[1]);
+    const result = db.prepare("DELETE FROM messages WHERE id = ?").run(id);
+    return result.changes > 0 ? json(res, 200, { deleted: 1 }) : json(res, 404, { error: "Mesaj bulunamadı" });
+  }
+  if (req.method === "DELETE" && url.pathname === "/api/messages") {
+    const result = db.prepare("DELETE FROM messages").run();
+    return json(res, 200, { deleted: Number(result.changes) });
+  }
   if (req.method === "GET" && url.pathname === "/api/dashboard") {
     const counts = db.prepare(`SELECT COUNT(*) total, SUM(CASE WHEN a.priority='yüksek' THEN 1 ELSE 0 END) urgent FROM messages m LEFT JOIN analyses a ON a.message_id=m.id`).get();
     const categories = db.prepare(`SELECT COALESCE(a.category, 'İşlenmedi') category, COUNT(*) count FROM messages m LEFT JOIN analyses a ON a.message_id=m.id GROUP BY category ORDER BY count DESC`).all();
@@ -151,8 +177,21 @@ async function api(req, res, url) {
 }
 
 const contentTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml" };
+const port = Number(process.env.PORT || 4173);
+const host = process.env.HOST || "127.0.0.1";
+const allowedAuthorities = new Set([`${host}:${port}`, `127.0.0.1:${port}`, `localhost:${port}`, `[::1]:${port}`]);
+const allowedOrigins = new Set([...allowedAuthorities].map(value => `http://${value}`));
+
 const server = http.createServer(async (req, res) => {
   try {
+    const authority = req.headers.host;
+    if (!authority || !allowedAuthorities.has(authority.toLowerCase())) {
+      return json(res, 403, { error: "Geçersiz Host başlığı" });
+    }
+    const origin = req.headers.origin;
+    if (origin && !allowedOrigins.has(origin.toLowerCase())) {
+      return json(res, 403, { error: "Bu kaynaktan isteğe izin verilmiyor" });
+    }
     const url = new URL(req.url, "http://127.0.0.1");
     if (url.pathname.startsWith("/api/")) {
       const handled = await api(req, res, url);
@@ -164,15 +203,19 @@ const server = http.createServer(async (req, res) => {
     const publicRoot = path.resolve(ROOT, "public") + path.sep;
     if (!file.startsWith(publicRoot) || !existsSync(file)) return json(res, 404, { error: "Dosya bulunamadı" });
     const data = await readFile(file);
-    res.writeHead(200, { "content-type": contentTypes[path.extname(file)] ?? "application/octet-stream" });
+    res.writeHead(200, {
+      "content-type": contentTypes[path.extname(file)] ?? "application/octet-stream",
+      "cache-control": "no-store",
+      "x-content-type-options": "nosniff",
+      "referrer-policy": "no-referrer",
+      "content-security-policy": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
+    });
     res.end(data);
   } catch (error) {
     json(res, 500, { error: error.message });
   }
 });
 
-const port = Number(process.env.PORT || 4173);
-const host = process.env.HOST || "127.0.0.1";
 server.listen(port, host, () => console.log(`Eğitim Pusulası: http://${host}:${port}`));
 
 function shutdown() {

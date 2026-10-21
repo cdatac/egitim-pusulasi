@@ -24,8 +24,10 @@ textarea { min-height:150px; resize:vertical; }
 textarea:focus,input:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(31,107,81,.12); }
 button { border:0; border-radius:999px; background:var(--green); color:white; padding:12px 18px; font-weight:750; cursor:pointer; }
 button.ghost { background:transparent; color:var(--green); border:1px solid #aac7b8; }
+button.danger { background:transparent; color:#9a3e26; border:1px solid #d9ad9f; }
 #feedback { color:var(--muted); font-size:.86rem; }
 .toolbar { margin-top:14px; align-items:end; }
+.toolbar-actions { display:flex; align-items:center; justify-content:flex-end; gap:9px; flex:1; }
 .toolbar input { max-width:300px; }
 .feed { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
 .message { background:rgba(255,253,247,.92); border:1px solid var(--line); border-radius:20px; padding:23px; box-shadow:0 12px 34px rgba(37,48,43,.05); }
@@ -40,7 +42,8 @@ button.ghost { background:transparent; color:var(--green); border:1px solid #aac
 details { border-top:1px solid var(--line); padding-top:14px; color:var(--muted); }
 summary { cursor:pointer; font-weight:650; color:#50615a; }
 details p { white-space:pre-wrap; margin-top:12px; }
+.delete-message { margin-top:14px; padding:7px 0; border-radius:0; background:transparent; color:#8b5e50; font-size:.76rem; }
 .empty { grid-column:1/-1; display:grid; place-items:center; gap:8px; min-height:220px; border:1px dashed #b8b8ad; border-radius:20px; color:var(--muted); }
 .empty strong { color:var(--ink); }
 code { background:#eceae2; border-radius:6px; padding:2px 5px; }
-@media (max-width:720px) { .composer,.feed { grid-template-columns:1fr; } .composer .row { grid-column:auto; flex-wrap:wrap; } .stats { grid-template-columns:1fr; } header,.toolbar { align-items:flex-start; flex-direction:column; } .toolbar input { max-width:none; } }
+@media (max-width:720px) { .composer,.feed { grid-template-columns:1fr; } .composer .row { grid-column:auto; flex-wrap:wrap; } .stats { grid-template-columns:1fr; } header,.toolbar { align-items:flex-start; flex-direction:column; } .toolbar-actions { width:100%; flex-wrap:wrap; justify-content:flex-start; } .toolbar input { max-width:none; } }

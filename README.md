@@ -30,6 +30,8 @@ API anahtarı veritabanına veya tarayıcıya yazılmaz. AI servisi etkinleştir
 - Kaynağı koruyan özet kartları
 - Kategori, öncelik, tarih ve yapılacak iş çıkarma
 - Arama
+- JSON veri dışa aktarma
+- Tek iletiyi veya tüm yerel veriyi silme
 - İsteğe bağlı AI servis bağlantısı
 
 K12 otomatik bağlayıcısı, oturum açılmış ağ çağrıları doğrulandıktan sonra eklenecektir. Uygulama K12 parolasını saklamaz.

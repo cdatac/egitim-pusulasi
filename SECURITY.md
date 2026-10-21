@@ -13,6 +13,8 @@ Bildirimde gerçek parola, oturum çerezi, öğrenci adı, okul mesajı veya ekr
 ## Güvenlik sınırları
 
 - Sunucu varsayılan olarak yalnızca `127.0.0.1` üzerinde dinler.
+- Host ve Origin doğrulaması, başka web sayfalarının yerel API'ye erişmesini sınırlar.
+- Arayüz sıkı Content Security Policy ile sunulur.
 - K12 bağlayıcıları salt okunur tasarlanır.
 - API anahtarları ve oturum bilgileri veritabanına yazılmaz.
 - Yerel veritabanı, APK'lar ve ağ kayıtları Git tarafından yok sayılır.
