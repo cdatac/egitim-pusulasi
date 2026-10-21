@@ -59,9 +59,10 @@
 ### 4. Açık kaynak yayını
 
 - [ ] Lisans seçimi
-- [ ] Katkı rehberi ve davranış kuralları
-- [ ] Güvenlik bildirim politikası
-- [ ] Tehdit modeli ve gizlilik belgesi
+- [x] Katkı rehberi ve davranış kuralları
+- [x] Güvenlik bildirim politikası
+- [x] Tehdit modeli ve gizlilik belgesi
+- [x] Çalışma ağacı ve Git geçmişi için otomatik yayın denetimi
 - [x] Otomatik test/kalite iş akışı
 - [ ] Herkese açık GitHub deposu ve ilk sürüm
 

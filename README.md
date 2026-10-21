@@ -54,3 +54,13 @@ API anahtarı veritabanına veya tarayıcıya yazılmaz. AI servisi etkin olsa b
 K12 otomatik bağlayıcısı, oturum açılmış ağ çağrıları doğrulandıktan sonra eklenecektir. Uygulama K12 parolasını saklamaz.
 
 Bağlayıcıların veri ve güvenlik sözleşmesi için [docs/CONNECTORS.md](docs/CONNECTORS.md) belgesine bakın.
+
+## Katkı ve güvenlik
+
+Katkı süreci için [CONTRIBUTING.md](CONTRIBUTING.md), güvenlik bildirimi için [SECURITY.md](SECURITY.md), veri akışları ve kalan riskler için [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) belgelerine bakın.
+
+GitHub'a göndermeden önce çalışma ağacını ve tüm Git geçmişini özel dosya ve yüksek güvenli kimlik bilgisi kalıplarına karşı denetleyin:
+
+```powershell
+npm run audit:release
+```
