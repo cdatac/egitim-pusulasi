@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
   - name: Güvenlik açığı bildirimi
-    url: https://github.com/OWNER/REPOSITORY/security/advisories/new
-    about: Çocuk veya aile verisini etkileyen güvenlik sorunlarını herkese açık issue olarak paylaşmayın. Depo yayımlandığında OWNER/REPOSITORY güncellenecektir.
+    url: https://github.com/cdatac/egitim-pusulasi/security/advisories/new
+    about: Çocuk veya aile verisini etkileyen güvenlik sorunlarını herkese açık issue olarak paylaşmayın; özel güvenlik bildirimi kullanın.

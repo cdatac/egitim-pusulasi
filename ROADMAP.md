@@ -64,7 +64,7 @@
 
 ### 4. Açık kaynak yayını
 
-- [ ] Lisans seçimi
+- [x] AGPL-3.0 lisans seçimi
 - [x] Katkı rehberi ve davranış kuralları
 - [x] Güvenlik bildirim politikası
 - [x] Tehdit modeli ve gizlilik belgesi

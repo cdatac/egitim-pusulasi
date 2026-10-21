@@ -2,6 +2,15 @@
   "name": "egitim-pusulasi",
   "version": "0.1.0",
   "private": true,
+  "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cdatac/egitim-pusulasi.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cdatac/egitim-pusulasi/issues"
+  },
+  "homepage": "https://github.com/cdatac/egitim-pusulasi#readme",
   "type": "module",
   "scripts": {
     "doctor": "node scripts/doctor.mjs",

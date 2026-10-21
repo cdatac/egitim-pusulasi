@@ -6,7 +6,7 @@ Proje henüz ön sürümdedir. Güvenlik düzeltmeleri ana dalın en güncel sü
 
 ## Güvenlik açığı bildirme
 
-Çocuk veya aile verisini etkileyebilecek bir güvenlik sorununu herkese açık issue olarak paylaşmayın. GitHub deposu yayımlandığında özel güvenlik bildirimleri etkinleştirilecek ve bu dosyaya iletişim kanalı eklenecektir.
+Çocuk veya aile verisini etkileyebilecek bir güvenlik sorununu herkese açık issue olarak paylaşmayın. [GitHub özel güvenlik bildirimi](https://github.com/cdatac/egitim-pusulasi/security/advisories/new) açarak proje bakımcılarına gizlice iletin.
 
 Bildirimde gerçek parola, oturum çerezi, öğrenci adı, okul mesajı veya ekran görüntüsü kullanmayın. Yeniden üretim için sentetik veri tercih edin.
 

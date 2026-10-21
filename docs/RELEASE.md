@@ -1,13 +1,13 @@
 # Sürüm ve GitHub yayın rehberi
 
-Bu proje henüz herkese açık bir uzak depoya bağlı değildir. İlk yayın, aşağıdaki kapılar tamamlanmadan yapılmamalıdır.
+Projenin ana deposu `https://github.com/cdatac/egitim-pusulasi` adresindedir. Yayınlar aşağıdaki kapılar tamamlanmadan yapılmamalıdır.
 
 ## Bir defalık depo hazırlığı
 
-1. Depo sahibi ve `egitim-pusulasi` gibi kalıcı depo adı belirlenir.
-2. Kullanıcının seçtiği açık kaynak lisansı `LICENSE` dosyasına eklenir.
-3. `.github/ISSUE_TEMPLATE/config.yml` içindeki `OWNER/REPOSITORY` güvenlik bağlantısı gerçek depo yolu ile değiştirilir.
-4. GitHub özel güvenlik bildirimleri etkinleştirilir ve [SECURITY.md](../SECURITY.md) gerçek özel bildirim kanalını gösterecek şekilde güncellenir.
+1. Depo sahibi ve kalıcı depo adı doğrulanır.
+2. Kullanıcının seçtiği açık kaynak lisansının `LICENSE` dosyasında bulunduğu doğrulanır.
+3. `.github/ISSUE_TEMPLATE/config.yml` içindeki güvenlik bağlantısının gerçek depo yolunu kullandığı doğrulanır.
+4. GitHub özel güvenlik bildirimleri etkinleştirilir ve [SECURITY.md](../SECURITY.md) gerçek özel bildirim kanalını gösterir.
 5. Ana dal koruması; pull request, başarılı CI ve force-push engeliyle yapılandırılır.
 6. Depo açıklamasında projenin K12 ile resmî bağlantısı olmadığı belirtilir.
 

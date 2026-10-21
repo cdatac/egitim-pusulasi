@@ -103,10 +103,14 @@ Bağlayıcıların veri ve güvenlik sözleşmesi için [docs/CONNECTORS.md](doc
 
 Katkı süreci için [CONTRIBUTING.md](CONTRIBUTING.md), güvenlik bildirimi için [SECURITY.md](SECURITY.md), veri akışları ve kalan riskler için [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) belgelerine bakın.
 
-Sürüm paketleme ve GitHub yayın kapıları için [docs/RELEASE.md](docs/RELEASE.md) belgesine bakın. Lisans seçilmeden, gerçek depo güvenlik bağlantıları ayarlanmadan ve geçici güvenlik metni güncellenmeden sürüm iş akışı yayına izin vermez.
+Sürüm paketleme ve GitHub yayın kapıları için [docs/RELEASE.md](docs/RELEASE.md) belgesine bakın. Lisans veya gerçek depo güvenlik bağlantıları eksikse sürüm iş akışı yayına izin vermez.
 
 GitHub'a göndermeden önce çalışma ağacını ve tüm Git geçmişini özel dosya ve yüksek güvenli kimlik bilgisi kalıplarına karşı denetleyin:
 
 ```powershell
 npm run audit:release
 ```
+
+## Lisans
+
+Eğitim Pusulası, [GNU Affero General Public License v3.0](LICENSE) koşullarıyla ücretsiz ve açık kaynak olarak sunulur (`AGPL-3.0-only`).
