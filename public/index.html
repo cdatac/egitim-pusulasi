@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Ana içeriğe geç</a>
   <div class="shell">
     <header>
       <div>
@@ -14,10 +15,10 @@
         <h1>Eğitim Pusulası</h1>
         <p class="subtitle">Okul mesajlarını anlaşılır görevlere ve tarihlere dönüştürür.</p>
       </div>
-      <span id="ai-state" class="status">Bağlanıyor…</span>
+      <span id="ai-state" class="status" role="status" aria-live="polite">Bağlanıyor…</span>
     </header>
 
-    <main>
+    <main id="main-content">
       <section class="profile-bar" aria-label="Çocuk profili">
         <label for="profile-select">Çocuk profili</label>
         <select id="profile-select"></select>
@@ -38,12 +39,11 @@
             <p class="eyebrow">KAYNAKLI TAKİP ÖZETİ</p>
             <h2 id="digest-title">Son 7 gün</h2>
           </div>
-          <label>Dönem
-            <select id="digest-period">
-              <option value="week">Son 7 gün</option>
-              <option value="today">Bugün</option>
-            </select>
-          </label>
+          <label for="digest-period">Dönem</label>
+          <select id="digest-period">
+            <option value="week">Son 7 gün</option>
+            <option value="today">Bugün</option>
+          </select>
         </div>
         <div id="digest-content" aria-live="polite"></div>
       </section>
@@ -52,9 +52,10 @@
         <div>
           <p class="eyebrow">HIZLI İÇE AKTAR</p>
           <h2>Duyuru veya mesaj ekle</h2>
-          <p>İlk satır başlık kabul edilir. Birden fazla iletiyi <code>---</code> satırıyla ayırabilirsiniz.</p>
+          <p id="import-help">İlk satır başlık kabul edilir. Birden fazla iletiyi <code>---</code> satırıyla ayırabilirsiniz.</p>
         </div>
-        <textarea id="import-text" placeholder="Fen projesi\nCuma gününe kadar proje teslim edilecektir. Karton ve LED getiriniz."></textarea>
+        <label class="sr-only" for="import-text">Duyuru veya mesaj metni</label>
+        <textarea id="import-text" aria-describedby="import-help" placeholder="Fen projesi\nCuma gününe kadar proje teslim edilecektir. Karton ve LED getiriniz."></textarea>
         <div class="row">
           <button id="import">İşle ve ekle</button>
           <button id="demo" class="ghost">Örnek yükle</button>
@@ -68,6 +69,7 @@
           <h2>Mesajlar ve yapılacaklar</h2>
         </div>
         <div class="toolbar-actions">
+          <label class="sr-only" for="search">Mesajlarda ara</label>
           <input id="search" type="search" placeholder="Mesajlarda ara…">
           <button id="calendar" class="ghost">Takvimi indir</button>
           <button id="export" class="ghost">Veriyi indir</button>

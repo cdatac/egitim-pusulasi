@@ -57,7 +57,8 @@
 - [x] Başlangıç ortamı denetleyicisi
 - [ ] İlk kurulum sihirbazı
 - [ ] Türkçe kullanım ve güvenlik belgeleri
-- [ ] Erişilebilirlik ve mobil uyum
+- [x] Temel klavye, etiket, odak, azaltılmış hareket ve mobil uyum
+- [ ] Ekran okuyucu ve WCAG 2.2 AA uzman doğrulaması
 
 ### 4. Açık kaynak yayını
 

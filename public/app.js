@@ -21,7 +21,7 @@ function render() {
     const tasks = analysis?.actionItems?.map(task => `<li class="${task.completed ? "completed" : ""}"><label><input class="task-toggle" type="checkbox" data-message-id="${item.id}" data-task-key="${esc(task.key)}" ${task.completed ? "checked" : ""}> <span>${esc(task.text)}</span></label></li>`).join("") ?? "";
     return `<article id="message-${item.id}" class="message ${analysis?.priority === "yüksek" ? "high" : ""}">
       <div class="message-head">
-        <div><span class="chip">${esc(analysis?.category ?? item.kind)}</span>${dates}</div>
+        <div><span class="chip">${esc(analysis?.category ?? item.kind)}</span>${analysis?.priority === "yüksek" ? `<span class="chip priority">Öncelikli</span>` : ""}${dates}</div>
         <small>${esc(item.occurredAt || item.createdAt)}</small>
       </div>
       <h3>${esc(item.title)}</h3>
@@ -138,7 +138,8 @@ $("#digest-content").addEventListener("click", async event => {
     $("#search").value = "";
     await refresh();
   }
-  document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.getElementById(targetId)?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "center" });
 });
 
 $("#add-profile").addEventListener("click", async () => {
