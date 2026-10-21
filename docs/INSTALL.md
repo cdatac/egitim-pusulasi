@@ -8,7 +8,8 @@ Eğitim Pusulası ön sürümü çalışma zamanı paketi indirmez ve yönetici 
 2. Eğitim Pusulası arşivini kişisel ve yazılabilir bir klasöre çıkarın. Ortak veya bulutla eşitlenen bir klasör çocuk verileri için önerilmez.
 3. `Egitim-Pusulasi-Baslat.cmd` dosyasına çift tıklayın.
 4. Komut penceresini açık bırakın. Uygulama hazır olduğunda `http://127.0.0.1:4173` tarayıcıda açılır.
-5. Durdurmak için komut penceresinde `Ctrl+C` kullanın ve sorulursa onaylayın.
+5. İlk kurulum ekranındaki yerel veri ve isteğe bağlı AI açıklamasını okuyun; çocuk profili için gerçek ad yerine takma ad kullanabilirsiniz.
+6. Durdurmak için komut penceresinde `Ctrl+C` kullanın ve sorulursa onaylayın.
 
 Windows bilinmeyen bir `.cmd` dosyası için uyarı gösterebilir. Dosya düz metindir; çalıştırmadan önce içeriği bir metin düzenleyicisinde inceleyebilirsiniz. Proje PowerShell çalıştırma politikasını değiştirmez.
 

@@ -55,7 +55,7 @@
 - [ ] Node.js gerektirmeyen imzalı masaüstü paketleri
 - [ ] Güvenli Docker Compose seçeneği (yapılandırma doğrulandı; gerçek imaj derlemesi Docker motoru bekliyor)
 - [x] Başlangıç ortamı denetleyicisi
-- [ ] İlk kurulum sihirbazı
+- [x] Yerel veri, takma ad ve AI onayı açıklamalı ilk kurulum sihirbazı
 - [ ] Türkçe kullanım ve güvenlik belgeleri
 - [x] Temel klavye, etiket, odak, azaltılmış hareket ve mobil uyum
 - [ ] Ekran okuyucu ve WCAG 2.2 AA uzman doğrulaması

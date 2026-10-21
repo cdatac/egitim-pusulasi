@@ -149,6 +149,33 @@ test("boş gövdeyi içe aktarmaz", async t => {
   assert.equal((await response.json()).imported, 0);
 });
 
+test("ilk kurulum gizlilik onayı ister ve yerel profil adını kaydeder", async t => {
+  const app = await startServer();
+  t.after(() => app.close());
+  const initial = await fetch(`${app.base}/api/setup`).then(response => response.json());
+  assert.equal(initial.completed, false);
+  assert.equal(initial.localOnlyByDefault, true);
+  assert.equal(initial.aiConfigured, false);
+  assert.equal(initial.k12PasswordStored, false);
+
+  const rejected = await fetch(`${app.base}/api/setup`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ profileName: "Takma Ad", privacyAcknowledged: false })
+  });
+  assert.equal(rejected.status, 400);
+
+  const completed = await fetch(`${app.base}/api/setup`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ profileName: "Takma Ad", privacyAcknowledged: true })
+  }).then(response => response.json());
+  assert.equal(completed.completed, true);
+  assert.equal(completed.profile.name, "Takma Ad");
+  assert.equal((await fetch(`${app.base}/api/setup`).then(response => response.json())).completed, true);
+  assert.equal((await fetch(`${app.base}/api/profiles`).then(response => response.json()))[0].name, "Takma Ad");
+});
+
 test("tüm yerel veriyi temizler", async t => {
   const app = await startServer();
   t.after(() => app.close());
@@ -413,4 +440,5 @@ test("eski tek-profilli veritabanını veri kaybetmeden yükseltir", async t => 
   assert.equal(messages[0].title, "Eski ileti");
   assert.equal(messages[0].externalId, "legacy-1");
   assert.equal(messages[0].profileId, profiles[0].id);
+  assert.equal((await fetch(`${app.base}/api/setup`).then(response => response.json())).completed, true);
 });

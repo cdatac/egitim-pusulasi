@@ -9,6 +9,7 @@ Eğitim Pusulası çocukların okul verileriyle çalışır. Bu nedenle veri min
 - Her profilin iletileri, panosu, dışa aktarımı ve silme işlemleri birbirinden ayrıdır.
 - Yerel sınıflandırma kullanıldığında mesajlar üçüncü tarafa gönderilmez.
 - K12 parolası bu prototip tarafından saklanmaz.
+- İlk kurulum ekranı bu sınırları gösterir ve gerçek çocuk adı yerine takma ad kullanılmasını önerir.
 
 ## İsteğe bağlı bulut AI
 

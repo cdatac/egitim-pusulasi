@@ -8,6 +8,26 @@
 </head>
 <body>
   <a class="skip-link" href="#main-content">Ana içeriğe geç</a>
+  <dialog id="setup-dialog" aria-labelledby="setup-title" aria-describedby="setup-description">
+    <form id="setup-form">
+      <p class="eyebrow">İLK KURULUM</p>
+      <h2 id="setup-title">Eğitim Pusulası'na hoş geldiniz</h2>
+      <div id="setup-description" class="setup-notes">
+        <p>Mesajlar ve görev durumları varsayılan olarak yalnızca bu bilgisayardaki yerel veritabanında tutulur.</p>
+        <p>AI bağlantısı isteğe bağlıdır ve kapalı başlar. Açılırsa dahi her ileti veya soru için ayrıca onay istenir.</p>
+        <p>Uygulama K12 parolanızı saklamaz ve okul sisteminde mesaj gönderme, yoklama ya da not değiştirme işlemi yapmaz.</p>
+      </div>
+      <label for="setup-profile">Çocuk profili için ad veya takma ad</label>
+      <input id="setup-profile" name="profileName" maxlength="80" required autocomplete="off">
+      <div class="setup-check">
+        <input id="setup-privacy" name="privacyAcknowledged" type="checkbox" required>
+        <label for="setup-privacy">Yerel veri ve isteğe bağlı AI açıklamasını okudum.</label>
+      </div>
+      <p class="setup-tip">Mahremiyet için gerçek ad yerine takma ad kullanabilirsiniz. Profil adı AI servisine gönderilmez.</p>
+      <button type="submit">Yerel kullanıma başla</button>
+      <p id="setup-error" role="alert"></p>
+    </form>
+  </dialog>
   <div class="shell">
     <header>
       <div>

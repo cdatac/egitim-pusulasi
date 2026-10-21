@@ -318,6 +318,41 @@ $("#clear").addEventListener("click", async () => {
   await refresh();
 });
 
-loadProfiles().then(() => refresh()).catch(error => {
+$("#setup-dialog").addEventListener("cancel", event => event.preventDefault());
+
+$("#setup-form").addEventListener("submit", async event => {
+  event.preventDefault();
+  const errorBox = $("#setup-error");
+  errorBox.textContent = "";
+  const response = await fetch("/api/setup", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      profileName: $("#setup-profile").value,
+      privacyAcknowledged: $("#setup-privacy").checked
+    })
+  });
+  const result = await response.json();
+  if (!response.ok) {
+    errorBox.textContent = result.error ?? "İlk kurulum tamamlanamadı.";
+    return;
+  }
+  $("#setup-dialog").close();
+  await loadProfiles();
+  await refresh();
+});
+
+async function initialize() {
+  await loadProfiles();
+  const setup = await fetch("/api/setup").then(response => response.json());
+  if (!setup.completed) {
+    $("#setup-profile").value = setup.profile?.name ?? "Çocuğum";
+    $("#setup-dialog").showModal();
+    return;
+  }
+  await refresh();
+}
+
+initialize().catch(error => {
   feed.innerHTML = `<div class="empty"><strong>Bağlantı kurulamadı.</strong><span>${esc(error.message)}</span></div>`;
 });

@@ -10,7 +10,8 @@ Node.js 24 veya üzeri gerekir. Ek paket kurulumu yoktur.
 
 1. Proje klasöründeki `Egitim-Pusulasi-Baslat.cmd` dosyasına çift tıklayın.
 2. Başlatıcı ortamı denetler, yerel sunucuyu açar ve hazır olduğunda tarayıcıyı getirir.
-3. Uygulamayı durdurmak için açılan komut penceresinde `Ctrl+C` tuşlarına basın.
+3. İlk açılış ekranında yerel veri açıklamasını okuyup çocuk için bir ad veya takma ad seçin.
+4. Uygulamayı durdurmak için açılan komut penceresinde `Ctrl+C` tuşlarına basın.
 
 Başlatıcı İnternet'ten yazılım indirmez. Node.js eksikse yalnızca resmî indirme adresini gösterir.
 
@@ -75,6 +76,7 @@ API anahtarı veritabanına veya tarayıcıya yazılmaz. AI servisi etkin olsa b
 - İsteğe bağlı AI servis bağlantısı
 - Profil bazında, kullanıcı yönetimli ad ve özel ifade maskelemesi
 - En fazla beş yerel kaynak seçen, açık onaylı ve kaynak kimlikli AI soru-cevap
+- Yerel veri ve takma ad seçeneklerini açıklayan ilk kurulum ekranı
 
 K12 otomatik bağlayıcısı, oturum açılmış ağ çağrıları doğrulandıktan sonra eklenecektir. Uygulama K12 parolasını saklamaz.
 

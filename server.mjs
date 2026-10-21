@@ -64,6 +64,11 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(profile_id, normalized_term)
   );
+  CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 const messageColumns = db.prepare("PRAGMA table_info(messages)").all();
@@ -74,6 +79,13 @@ db.prepare(`INSERT INTO profiles(name, is_default) SELECT ?, 1 WHERE NOT EXISTS 
 const defaultProfileId = Number(db.prepare("SELECT id FROM profiles ORDER BY is_default DESC, id ASC LIMIT 1").get().id);
 db.prepare("UPDATE messages SET profile_id = ? WHERE profile_id IS NULL").run(defaultProfileId);
 db.prepare(`UPDATE messages SET external_id = CAST(profile_id AS TEXT) || ':' || external_id WHERE external_id IS NOT NULL AND external_id NOT LIKE CAST(profile_id AS TEXT) || ':%'`).run();
+const setupSetting = db.prepare("SELECT value FROM settings WHERE key = 'setup_completed'").get();
+if (!setupSetting) {
+  const existingUse = db.prepare("SELECT (SELECT COUNT(*) FROM messages) AS messages, (SELECT COUNT(*) FROM profiles) AS profiles, (SELECT name FROM profiles WHERE id = ?) AS default_name").get(defaultProfileId);
+  if (Number(existingUse.messages) > 0 || Number(existingUse.profiles) > 1 || existingUse.default_name !== "Çocuğum") {
+    db.prepare("INSERT INTO settings(key, value) VALUES ('setup_completed', '1')").run();
+  }
+}
 
 function json(res, status, value) {
   const body = JSON.stringify(value);
@@ -244,6 +256,33 @@ async function api(req, res, url) {
   }
   if (req.method === "GET" && url.pathname === "/api/profiles") {
     return json(res, 200, db.prepare("SELECT id, name, is_default AS isDefault, created_at AS createdAt FROM profiles ORDER BY is_default DESC, id ASC").all());
+  }
+  if (req.method === "GET" && url.pathname === "/api/setup") {
+    const profile = db.prepare("SELECT id, name FROM profiles WHERE id = ?").get(defaultProfileId);
+    return json(res, 200, {
+      completed: db.prepare("SELECT value FROM settings WHERE key = 'setup_completed'").get()?.value === "1",
+      profile,
+      localOnlyByDefault: true,
+      aiConfigured: isCloudAiConfigured(),
+      k12PasswordStored: false
+    });
+  }
+  if (req.method === "POST" && url.pathname === "/api/setup") {
+    const payload = await bodyJson(req);
+    if (payload.privacyAcknowledged !== true) return json(res, 400, { error: "Yerel veri ve gizlilik açıklamasının onaylanması gerekir" });
+    const profileName = String(payload.profileName ?? "").trim();
+    if (!profileName || profileName.length > 80 || /[\r\n\0]/.test(profileName)) return json(res, 400, { error: "Profil adı 1-80 karakter ve tek satır olmalıdır" });
+    db.exec("BEGIN IMMEDIATE");
+    try {
+      db.prepare("UPDATE profiles SET name = ? WHERE id = ?").run(profileName, defaultProfileId);
+      db.prepare(`INSERT INTO settings(key, value, updated_at) VALUES ('setup_completed', '1', CURRENT_TIMESTAMP)
+        ON CONFLICT(key) DO UPDATE SET value = '1', updated_at = CURRENT_TIMESTAMP`).run();
+      db.exec("COMMIT");
+    } catch (error) {
+      db.exec("ROLLBACK");
+      throw error;
+    }
+    return json(res, 200, { completed: true, profile: db.prepare("SELECT id, name FROM profiles WHERE id = ?").get(defaultProfileId) });
   }
   if (req.method === "POST" && url.pathname === "/api/profiles") {
     const payload = await bodyJson(req);
