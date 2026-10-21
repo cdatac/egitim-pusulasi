@@ -161,6 +161,41 @@ $("#add-profile").addEventListener("click", async () => {
   await refresh();
 });
 
+$("#rename-profile").addEventListener("click", async () => {
+  const current = profiles.find(profile => profile.id === activeProfileId);
+  const name = prompt("Çocuk profili için yeni ad veya takma ad:", current?.name ?? "");
+  if (!name?.trim()) return;
+  const response = await fetch(`/api/profiles/${activeProfileId}`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ name: name.trim() })
+  });
+  const result = await response.json();
+  if (!response.ok) return alert(result.error ?? "Profil adı değiştirilemedi.");
+  await loadProfiles();
+  activeProfileId = result.id;
+  $("#profile-select").value = String(result.id);
+  await refresh($("#search").value);
+});
+
+$("#delete-profile").addEventListener("click", async () => {
+  const current = profiles.find(profile => profile.id === activeProfileId);
+  const warning = profiles.length === 1
+    ? `${current?.name ?? "Bu profil"} ile birlikte tüm iletiler, analizler, görev durumları ve maskeleme ifadeleri kalıcı olarak silinsin mi? Uygulama ilk kurulum ekranına döner.`
+    : `${current?.name ?? "Bu profil"} ve ona ait tüm iletiler, analizler, görev durumları ve maskeleme ifadeleri kalıcı olarak silinsin mi?`;
+  if (!confirm(warning)) return;
+  const response = await fetch(`/api/profiles/${activeProfileId}`, { method: "DELETE" });
+  const result = await response.json();
+  if (!response.ok) return alert(result.error ?? "Profil silinemedi.");
+  localStorage.removeItem("egitim-pusulasi-profile");
+  if (result.reset) {
+    location.reload();
+    return;
+  }
+  await loadProfiles();
+  await refresh();
+});
+
 $("#redactions").addEventListener("click", async () => {
   const currentResponse = await fetch(`/api/profiles/${activeProfileId}/redactions`);
   const current = await currentResponse.json();
@@ -312,7 +347,7 @@ $("#calendar").addEventListener("click", async () => {
 
 $("#clear").addEventListener("click", async () => {
   const profileName = profiles.find(profile => profile.id === activeProfileId)?.name ?? "bu profil";
-  if (!confirm(`${profileName} için tüm yerel mesajlar ve analizler kalıcı olarak silinsin mi? Bu işlem geri alınamaz.`)) return;
+  if (!confirm(`${profileName} için tüm yerel mesajlar, analizler ve görev durumları kalıcı olarak silinsin mi? Profil adı ve AI maskeleme listesi korunur.`)) return;
   const response = await fetch(`/api/messages?profileId=${encodeURIComponent(activeProfileId)}`, { method: "DELETE" });
   if (!response.ok) return alert("Veriler temizlenemedi.");
   await refresh();

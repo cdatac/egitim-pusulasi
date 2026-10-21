@@ -27,6 +27,7 @@
 - [x] Yapılandırma şeması ve `.env.example`
 - [x] Veri dışa aktarma ve yerel veri silme kontrolleri
 - [x] Birden fazla çocuk için yalıtılmış profiller ve eski veritabanı geçişi
+- [x] Profil yeniden adlandırma ve tüm ilişkili verilerle güvenli silme
 
 ### 1. K12 salt okunur bağlayıcı
 

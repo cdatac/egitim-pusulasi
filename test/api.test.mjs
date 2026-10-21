@@ -362,6 +362,11 @@ test("birden fazla çocuk profilini birbirinden ayırır", async t => {
   const initialProfiles = await fetch(`${app.base}/api/profiles`).then(response => response.json());
   assert.equal(initialProfiles.length, 1);
   assert.equal(initialProfiles[0].name, "Çocuğum");
+  await fetch(`${app.base}/api/setup`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ profileName: "Çocuğum", privacyAcknowledged: true })
+  });
 
   const secondProfile = await fetch(`${app.base}/api/profiles`, {
     method: "POST",
@@ -409,6 +414,35 @@ test("birden fazla çocuk profilini birbirinden ayırır", async t => {
   assert.equal(exported.redactions[0].term, "Ada");
   assert.equal(exported.items.length, 1);
   assert.equal(exported.items[0].profileName, "İkinci profil");
+
+  const renamed = await fetch(`${app.base}/api/profiles/${secondProfile.id}`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ name: "Yeni takma ad" })
+  }).then(response => response.json());
+  assert.equal(renamed.name, "Yeni takma ad");
+
+  const deletedDefault = await fetch(`${app.base}/api/profiles/${initialProfiles[0].id}`, { method: "DELETE" }).then(response => response.json());
+  assert.equal(deletedDefault.deleted, 1);
+  assert.equal(deletedDefault.defaultProfileId, secondProfile.id);
+  const remainingProfiles = await fetch(`${app.base}/api/profiles`).then(response => response.json());
+  assert.equal(remainingProfiles.length, 1);
+  assert.equal(remainingProfiles[0].id, secondProfile.id);
+  assert.equal(Boolean(remainingProfiles[0].isDefault), true);
+
+  const defaultImport = await fetch(`${app.base}/api/messages`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ source: "test", externalId: "varsayilan-test", title: "Yeni varsayılan", body: "Varsayılan profile eklenir." })
+  }).then(response => response.json());
+  assert.equal(defaultImport.items[0].profileId, secondProfile.id);
+
+  const reset = await fetch(`${app.base}/api/profiles/${secondProfile.id}`, { method: "DELETE" }).then(response => response.json());
+  assert.equal(reset.reset, true);
+  assert.equal(reset.profile.name, "Çocuğum");
+  assert.equal((await fetch(`${app.base}/api/setup`).then(response => response.json())).completed, false);
+  assert.equal((await fetch(`${app.base}/api/messages`).then(response => response.json())).length, 0);
+  assert.deepEqual((await fetch(`${app.base}/api/profiles/${secondProfile.id}/redactions`).then(response => response.json())).terms, []);
 });
 
 test("eski tek-profilli veritabanını veri kaybetmeden yükseltir", async t => {

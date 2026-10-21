@@ -76,7 +76,7 @@ if (!messageColumns.some(column => column.name === "profile_id")) {
   db.exec("ALTER TABLE messages ADD COLUMN profile_id INTEGER REFERENCES profiles(id) ON DELETE CASCADE");
 }
 db.prepare(`INSERT INTO profiles(name, is_default) SELECT ?, 1 WHERE NOT EXISTS (SELECT 1 FROM profiles)`).run("Çocuğum");
-const defaultProfileId = Number(db.prepare("SELECT id FROM profiles ORDER BY is_default DESC, id ASC LIMIT 1").get().id);
+let defaultProfileId = Number(db.prepare("SELECT id FROM profiles ORDER BY is_default DESC, id ASC LIMIT 1").get().id);
 db.prepare("UPDATE messages SET profile_id = ? WHERE profile_id IS NULL").run(defaultProfileId);
 db.prepare(`UPDATE messages SET external_id = CAST(profile_id AS TEXT) || ':' || external_id WHERE external_id IS NOT NULL AND external_id NOT LIKE CAST(profile_id AS TEXT) || ':%'`).run();
 const setupSetting = db.prepare("SELECT value FROM settings WHERE key = 'setup_completed'").get();
@@ -291,6 +291,40 @@ async function api(req, res, url) {
     const result = db.prepare("INSERT INTO profiles(name, is_default) VALUES (?, 0)").run(name);
     const profile = db.prepare("SELECT id, name, is_default AS isDefault, created_at AS createdAt FROM profiles WHERE id = ?").get(result.lastInsertRowid);
     return json(res, 201, profile);
+  }
+  const profileMatch = url.pathname.match(/^\/api\/profiles\/(\d+)$/);
+  if (req.method === "PATCH" && profileMatch) {
+    const profileId = resolveProfileId(profileMatch[1]);
+    const payload = await bodyJson(req);
+    const name = String(payload.name ?? "").trim();
+    if (!name || name.length > 80 || /[\r\n\0]/.test(name)) return json(res, 400, { error: "Profil adı 1-80 karakter ve tek satır olmalıdır" });
+    db.prepare("UPDATE profiles SET name = ? WHERE id = ?").run(name, profileId);
+    return json(res, 200, db.prepare("SELECT id, name, is_default AS isDefault, created_at AS createdAt FROM profiles WHERE id = ?").get(profileId));
+  }
+  if (req.method === "DELETE" && profileMatch) {
+    const profileId = resolveProfileId(profileMatch[1]);
+    const profileCount = Number(db.prepare("SELECT COUNT(*) count FROM profiles").get().count);
+    if (profileCount === 1) {
+      db.exec("BEGIN IMMEDIATE");
+      try {
+        db.prepare("DELETE FROM messages WHERE profile_id = ?").run(profileId);
+        db.prepare("DELETE FROM redaction_terms WHERE profile_id = ?").run(profileId);
+        db.prepare("UPDATE profiles SET name = 'Çocuğum', is_default = 1 WHERE id = ?").run(profileId);
+        db.prepare("DELETE FROM settings WHERE key = 'setup_completed'").run();
+        db.exec("COMMIT");
+      } catch (error) {
+        db.exec("ROLLBACK");
+        throw error;
+      }
+      return json(res, 200, { deleted: 0, reset: true, profile: db.prepare("SELECT id, name, is_default AS isDefault FROM profiles WHERE id = ?").get(profileId) });
+    }
+    const wasDefault = profileId === defaultProfileId;
+    db.prepare("DELETE FROM profiles WHERE id = ?").run(profileId);
+    if (wasDefault) {
+      defaultProfileId = Number(db.prepare("SELECT id FROM profiles ORDER BY id LIMIT 1").get().id);
+      db.prepare("UPDATE profiles SET is_default = CASE WHEN id = ? THEN 1 ELSE 0 END").run(defaultProfileId);
+    }
+    return json(res, 200, { deleted: 1, reset: false, defaultProfileId });
   }
   const redactionMatch = url.pathname.match(/^\/api\/profiles\/(\d+)\/redactions$/);
   if (req.method === "GET" && redactionMatch) {

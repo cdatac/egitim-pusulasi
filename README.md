@@ -72,6 +72,7 @@ API anahtarı veritabanına veya tarayıcıya yazılmaz. AI servisi etkin olsa b
 - Açıkça yazılmış tam tarihler için standart `.ics` takvim dışa aktarımı
 - JSON veri dışa aktarma
 - Birden fazla çocuk için birbirinden yalıtılmış profiller
+- Profil adını değiştirme ve profili tüm yerel verileriyle silme
 - Tek iletiyi veya seçili profile ait tüm yerel veriyi silme
 - İsteğe bağlı AI servis bağlantısı
 - Profil bazında, kullanıcı yönetimli ad ve özel ifade maskelemesi
