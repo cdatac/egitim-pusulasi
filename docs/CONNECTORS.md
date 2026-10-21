@@ -35,6 +35,10 @@ Content-Type: application/json
 
 Mevcut K12 tanımı `read-only` durumundadır. Ağ uygulaması, kullanıcının kendi oturumunda duyuru ve mesaj çağrıları çalışma zamanında doğrulanana kadar bilinçli olarak etkin değildir.
 
+## Sentetik test örneği
+
+`test/fixtures/k12-safe-sample.json` yalnızca uydurma kişi, okul, ileti ve `.invalid` alan adları içerir. Bağlayıcı geliştirenler gerçek çocuk verisini kaydetmeden duyuru, mesaj, URL temizleme ve tekrar ayıklama akışını bu dosyayla sınayabilir. Gerçek oturumdan alınan yanıt gövdeleri, ekran görüntüleri veya ağ kayıtları depoya eklenmemelidir.
+
 ## Temiz oda kuralı
 
 Bağlayıcılar özel uygulama kaynak kodu veya varlıklarını kopyalamaz. Yalnızca kullanıcı tarafından yetkilendirilmiş çalışma zamanı davranışına, kamuya açık protokollere ve bu depodaki bağımsız uygulama koduna dayanır.

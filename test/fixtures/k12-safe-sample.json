@@ -1,0 +1,24 @@
+{
+  "fixtureVersion": 1,
+  "description": "Tamamen sentetik, gerçek öğrenci veya okul verisi içermeyen K12 bağlayıcı örneği",
+  "records": [
+    {
+      "externalId": "sentetik-duyuru-001",
+      "kind": "announcement",
+      "title": "Sentetik gezi duyurusu",
+      "body": "Bu bir test kaydıdır. 15.11.2030 tarihine kadar izin formunu getiriniz.",
+      "sender": "Sentetik Okul Yönetimi",
+      "occurredAt": "2030-11-01T09:00:00+03:00",
+      "sourceUrl": "https://okul.example.invalid/duyuru?id=fixture-001&code=sentetik"
+    },
+    {
+      "externalId": "sentetik-mesaj-001",
+      "kind": "message",
+      "title": "Sentetik malzeme mesajı",
+      "body": "Bu bir test kaydıdır. Pazartesi günü karton ve kalem getiriniz.",
+      "sender": "Sentetik Öğretmen",
+      "occurredAt": "2030-11-02T14:30:00+03:00",
+      "sourceUrl": "https://okul.example.invalid/mesaj?id=fixture-002"
+    }
+  ]
+}

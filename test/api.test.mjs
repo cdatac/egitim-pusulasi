@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -331,21 +331,28 @@ test("K12 bağlayıcı sözleşmesi kayıtları içe aktarır, tekrarları ayık
   assert.equal(connectors[0].mode, "read-only");
   assert.equal(connectors[0].networkImplementationAvailable, false);
 
-  const record = { kind: "announcement", title: "Duyuru", body: "Cuma günü etkinlik var.", occurredAt: "2026-10-23" };
+  const fixture = JSON.parse(await readFile(path.join(root, "test", "fixtures", "k12-safe-sample.json"), "utf8"));
+  assert.match(fixture.description, /Tamamen sentetik/);
   const first = await fetch(`${app.base}/api/connectors/k12/import`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ records: [record] })
+    body: JSON.stringify({ records: fixture.records })
   }).then(response => response.json());
-  assert.equal(first.imported, 1);
-  assert.equal(first.items[0].source, "connector:k12");
+  assert.equal(first.imported, 2);
+  assert.deepEqual(first.items.map(item => item.kind).sort(), ["announcement", "message"]);
+  assert.ok(first.items.every(item => item.source === "connector:k12"));
+  assert.doesNotMatch(first.items[0].sourceUrl, /code=sentetik/);
 
   const duplicate = await fetch(`${app.base}/api/connectors/k12/import`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ records: [record] })
+    body: JSON.stringify({ records: fixture.records })
   }).then(response => response.json());
   assert.equal(duplicate.imported, 0);
+
+  const stored = await fetch(`${app.base}/api/messages`).then(response => response.json());
+  assert.equal(stored.length, 2);
+  assert.deepEqual(new Set(stored.map(item => item.externalId)), new Set(fixture.records.map(item => item.externalId)));
 
   const rejected = await fetch(`${app.base}/api/connectors/k12/import`, {
     method: "POST",
