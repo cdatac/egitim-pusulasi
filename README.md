@@ -87,6 +87,8 @@ Bağlayıcıların veri ve güvenlik sözleşmesi için [docs/CONNECTORS.md](doc
 
 Katkı süreci için [CONTRIBUTING.md](CONTRIBUTING.md), güvenlik bildirimi için [SECURITY.md](SECURITY.md), veri akışları ve kalan riskler için [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) belgelerine bakın.
 
+Sürüm paketleme ve GitHub yayın kapıları için [docs/RELEASE.md](docs/RELEASE.md) belgesine bakın. Lisans seçilmeden ve gerçek depo güvenlik bağlantıları ayarlanmadan sürüm iş akışı yayına izin vermez.
+
 GitHub'a göndermeden önce çalışma ağacını ve tüm Git geçmişini özel dosya ve yüksek güvenli kimlik bilgisi kalıplarına karşı denetleyin:
 
 ```powershell

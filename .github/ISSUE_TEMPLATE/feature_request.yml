@@ -1,0 +1,34 @@
+name: Özellik önerisi
+description: Ebeveyn kontrolünü ve çocuk gizliliğini koruyan bir geliştirme önerin.
+title: "[Öneri]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: İhtiyaç
+      description: Hangi ebeveyn sorununu çözmek istiyorsunuz?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Önerilen davranış
+    validations:
+      required: true
+  - type: textarea
+    id: privacy
+    attributes:
+      label: Veri ve gizlilik etkisi
+      description: Hangi veri toplanır, nerede saklanır, dışarı gönderilir mi ve nasıl silinir?
+    validations:
+      required: true
+  - type: checkboxes
+    id: principles
+    attributes:
+      label: Ürün ilkeleri
+      options:
+        - label: Öneri okul sisteminde yazma/değiştirme eylemi gerektirmiyor veya neden gerekli olduğunu açıklıyor.
+          required: true
+        - label: Öneri reklam, izleme veya çocuk profillemesi amacı taşımıyor.
+          required: true

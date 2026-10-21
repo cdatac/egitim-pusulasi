@@ -69,6 +69,8 @@
 - [x] Tehdit modeli ve gizlilik belgesi
 - [x] Çalışma ağacı ve Git geçmişi için otomatik yayın denetimi
 - [x] Otomatik test/kalite iş akışı
+- [x] Lisans ve sürüm eşleşmesini zorlayan arşiv/checksum yayın iş akışı
+- [x] Gizlilik uyarılı issue ve pull request şablonları
 - [ ] Herkese açık GitHub deposu ve ilk sürüm
 
 ## Yayın kapıları

@@ -1,0 +1,45 @@
+name: Hata bildirimi
+description: Sentetik veri kullanarak yeniden üretilebilir bir hata bildirin.
+title: "[Hata]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: "Gerçek öğrenci adı, okul mesajı, parola, çerez, token, ekran görüntüsü veya APK paylaşmayın. Güvenlik açıklarını özel güvenlik bildirimiyle gönderin."
+  - type: textarea
+    id: description
+    attributes:
+      label: Hata
+      description: Ne oldu ve ne olmasını bekliyordunuz?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Yeniden üretme adımları
+      description: Yalnızca sentetik örneklerle adımları yazın.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Sürüm veya commit
+      placeholder: v0.1.0 veya commit kimliği
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options: [Windows, macOS, Linux, Docker]
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Gizlilik kontrolü
+      options:
+        - label: Bildirim gerçek çocuk/okul verisi veya kimlik bilgisi içermiyor.
+          required: true
+        - label: Bunun özel bildirilmesi gereken bir güvenlik açığı olmadığını doğruladım.
+          required: true
