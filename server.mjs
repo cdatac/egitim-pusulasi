@@ -55,6 +55,14 @@ db.exec(`
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY(message_id, task_key)
   );
+  CREATE TABLE IF NOT EXISTS redaction_terms (
+    id INTEGER PRIMARY KEY,
+    profile_id INTEGER NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    term TEXT NOT NULL,
+    normalized_term TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(profile_id, normalized_term)
+  );
 `);
 
 const messageColumns = db.prepare("PRAGMA table_info(messages)").all();
@@ -150,10 +158,27 @@ function getMessage(id) {
   return row ? rowToMessage(row) : null;
 }
 
+function getRedactionTerms(profileId) {
+  return db.prepare("SELECT term FROM redaction_terms WHERE profile_id = ? ORDER BY id").all(profileId).map(row => row.term);
+}
+
+function normalizeRedactionTerms(value) {
+  if (!Array.isArray(value)) throw new ProfileValidationError("Maskeleme ifadeleri bir liste olmalıdır");
+  if (value.length > 50) throw new ProfileValidationError("En fazla 50 maskeleme ifadesi kullanılabilir");
+  const unique = new Map();
+  for (const raw of value) {
+    const term = String(raw ?? "").trim();
+    if (!term) continue;
+    if (term.length < 2 || term.length > 80 || /[\r\n\0]/.test(term)) throw new ProfileValidationError("Maskeleme ifadeleri 2-80 karakter ve tek satır olmalıdır");
+    unique.set(term.toLocaleLowerCase("tr-TR"), term);
+  }
+  return [...unique].map(([normalized, term]) => ({ normalized, term }));
+}
+
 async function runAnalysis(id, mode = "local") {
   const message = getMessage(id);
   if (!message) return null;
-  const analysis = await analyzeMessage(message, { mode });
+  const analysis = await analyzeMessage(message, { mode, redactTerms: getRedactionTerms(message.profileId) });
   db.prepare(`
     INSERT INTO analyses(message_id, summary, category, priority, action_items, dates, confidence, provider, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
@@ -227,16 +252,38 @@ async function api(req, res, url) {
     const profile = db.prepare("SELECT id, name, is_default AS isDefault, created_at AS createdAt FROM profiles WHERE id = ?").get(result.lastInsertRowid);
     return json(res, 201, profile);
   }
+  const redactionMatch = url.pathname.match(/^\/api\/profiles\/(\d+)\/redactions$/);
+  if (req.method === "GET" && redactionMatch) {
+    const profileId = resolveProfileId(redactionMatch[1]);
+    return json(res, 200, { profileId, terms: getRedactionTerms(profileId) });
+  }
+  if (req.method === "PUT" && redactionMatch) {
+    const profileId = resolveProfileId(redactionMatch[1]);
+    const payload = await bodyJson(req);
+    const terms = normalizeRedactionTerms(payload.terms);
+    db.exec("BEGIN IMMEDIATE");
+    try {
+      db.prepare("DELETE FROM redaction_terms WHERE profile_id = ?").run(profileId);
+      const insert = db.prepare("INSERT INTO redaction_terms(profile_id, term, normalized_term) VALUES (?, ?, ?)");
+      for (const item of terms) insert.run(profileId, item.term, item.normalized);
+      db.exec("COMMIT");
+    } catch (error) {
+      db.exec("ROLLBACK");
+      throw error;
+    }
+    return json(res, 200, { profileId, terms: getRedactionTerms(profileId) });
+  }
   if (req.method === "GET" && url.pathname === "/api/connectors") {
     return json(res, 200, connectorDescriptors);
   }
   if (req.method === "GET" && url.pathname === "/api/export") {
     const items = db.prepare(`${selectSql} ORDER BY COALESCE(m.occurred_at, m.created_at) DESC`).all().map(rowToMessage);
     return json(res, 200, {
-      schemaVersion: 3,
+      schemaVersion: 4,
       exportedAt: new Date().toISOString(),
       product: "Eğitim Pusulası",
       profiles: db.prepare("SELECT id, name, is_default AS isDefault, created_at AS createdAt FROM profiles ORDER BY id").all(),
+      redactions: db.prepare("SELECT profile_id AS profileId, term, created_at AS createdAt FROM redaction_terms ORDER BY profile_id, id").all(),
       items
     });
   }
@@ -271,10 +318,11 @@ async function api(req, res, url) {
     const message = getMessage(Number(previewMatch[1]));
     if (!message) return json(res, 404, { error: "Mesaj bulunamadı" });
     if (!isCloudAiConfigured()) return json(res, 409, { error: "Bulut AI servisi yapılandırılmamış" });
-    const preview = cloudAiPreview(message);
+    const preview = cloudAiPreview(message, { redactTerms: getRedactionTerms(message.profileId) });
     return json(res, 200, {
       providerConfigured: true,
       redactionEnabled: preview.redactionEnabled,
+      customRedactionTerms: preview.customRedactionTerms,
       fields: preview.fields,
       characters: preview.characters
     });

@@ -48,3 +48,14 @@ test("bulut önizlemesinde e-posta ve telefonu varsayılan olarak maskeler", () 
     else process.env.AI_REDACT = previous;
   }
 });
+
+test("kullanıcının özel ifadelerini büyük-küçük harf ve noktalama güvenli biçimde maskeler", () => {
+  const preview = cloudAiPreview({
+    title: "Ada (A.) için duyuru",
+    sender: "ADA (A.)",
+    body: "Ada (A.) geziye katılacaktır."
+  }, { redactTerms: ["Ada (A.)"] });
+  assert.equal(preview.customRedactionTerms, 1);
+  assert.doesNotMatch(JSON.stringify(preview.prepared), /Ada|ADA/);
+  assert.match(preview.prepared.body, /ÖZEL İFADE MASKELENDİ/);
+});

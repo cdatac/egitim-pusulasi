@@ -47,6 +47,7 @@
 - [ ] Mesajlar üzerinde kaynaklı soru-cevap
 - [ ] Bulut AI ve yerel model seçenekleri
 - [x] Gönderilecek alanlar için görünür gizlilik önizlemesi ve ileti başına onay
+- [x] Profil bazında kullanıcı yönetimli özel ifade maskelemesi
 
 ### 3. Herkes için dağıtım
 

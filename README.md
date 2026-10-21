@@ -53,6 +53,7 @@ API anahtarı veritabanına veya tarayıcıya yazılmaz. AI servisi etkin olsa b
 - Birden fazla çocuk için birbirinden yalıtılmış profiller
 - Tek iletiyi veya seçili profile ait tüm yerel veriyi silme
 - İsteğe bağlı AI servis bağlantısı
+- Profil bazında, kullanıcı yönetimli ad ve özel ifade maskelemesi
 
 K12 otomatik bağlayıcısı, oturum açılmış ağ çağrıları doğrulandıktan sonra eklenecektir. Uygulama K12 parolasını saklamaz.
 

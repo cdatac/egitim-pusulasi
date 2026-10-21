@@ -158,6 +158,23 @@ $("#add-profile").addEventListener("click", async () => {
   await refresh();
 });
 
+$("#redactions").addEventListener("click", async () => {
+  const currentResponse = await fetch(`/api/profiles/${activeProfileId}/redactions`);
+  const current = await currentResponse.json();
+  if (!currentResponse.ok) return alert(current.error ?? "Maskeleme listesi alınamadı.");
+  const input = prompt("AI çağrısından önce maskelenecek ad veya ifadeleri virgül ya da yeni satırla ayırın. Liste yalnızca bu cihazda tutulur:", current.terms.join(", "));
+  if (input === null) return;
+  const terms = input.split(/[,\n]+/).map(value => value.trim()).filter(Boolean);
+  const response = await fetch(`/api/profiles/${activeProfileId}/redactions`, {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ terms })
+  });
+  const result = await response.json();
+  if (!response.ok) return alert(result.error ?? "Maskeleme listesi kaydedilemedi.");
+  alert(`${result.terms.length} özel maskeleme ifadesi yalnızca bu cihazda kaydedildi.`);
+});
+
 feed.addEventListener("click", async event => {
   const taskToggle = event.target.closest(".task-toggle");
   if (taskToggle) {
@@ -176,7 +193,9 @@ feed.addEventListener("click", async event => {
     const previewResponse = await fetch(`/api/messages/${aiButton.dataset.id}/ai-preview`);
     const preview = await previewResponse.json();
     if (!previewResponse.ok) return alert(preview.error ?? "AI önizlemesi alınamadı.");
-    const masking = preview.redactionEnabled ? "E-posta ve telefon maskelemesi açık." : "Maskeleme kapalı.";
+    const masking = preview.redactionEnabled
+      ? `E-posta ve telefon maskelemesi açık. ${preview.customRedactionTerms} özel ifade de maskelenecek.`
+      : "Maskeleme kapalı.";
     const accepted = confirm(`Başlık, gönderen, tarih ve mesaj gövdesi seçtiğiniz AI servisine gönderilecek. ${masking}\n\nYaklaşık ${preview.characters} karakter gönderilecek. Devam edilsin mi?`);
     if (!accepted) return;
     aiButton.disabled = true;

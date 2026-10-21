@@ -99,8 +99,9 @@ test("sağlık, içe aktarma, analiz ve pano akışı", async t => {
   assert.match(search[0].body, /çalışma kağıdı/);
 
   const exported = await fetch(`${app.base}/api/export`).then(response => response.json());
-  assert.equal(exported.schemaVersion, 3);
+  assert.equal(exported.schemaVersion, 4);
   assert.equal(exported.product, "Eğitim Pusulası");
+  assert.deepEqual(exported.redactions, []);
   assert.equal(exported.items.length, 1);
   assert.equal(exported.items[0].analysis.category, "Ödev");
 
@@ -208,6 +209,14 @@ test("bulut AI yapılandırılsa bile yalnızca ileti başına onaylı çağrıd
   });
   t.after(() => app.close());
 
+  const [profile] = await fetch(`${app.base}/api/profiles`).then(response => response.json());
+  const redactions = await fetch(`${app.base}/api/profiles/${profile.id}/redactions`, {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ terms: ["Deniz", "deniz"] })
+  }).then(response => response.json());
+  assert.deepEqual(redactions.terms, ["deniz"]);
+
   const imported = await fetch(`${app.base}/api/messages`, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -216,7 +225,7 @@ test("bulut AI yapılandırılsa bile yalnızca ileti başına onaylı çağrıd
       externalId: "ai-1",
       title: "İletişim duyurusu",
       sender: "ogretmen@example.com",
-      body: "Detay için 0532 123 45 67 numarasını arayın."
+      body: "Deniz için detayları 0532 123 45 67 numarasından öğrenin."
     })
   }).then(response => response.json());
   assert.equal(imported.items[0].analysis.provider, "yerel-kural");
@@ -226,6 +235,7 @@ test("bulut AI yapılandırılsa bile yalnızca ileti başına onaylı çağrıd
   const preview = await fetch(`${app.base}/api/messages/${id}/ai-preview`).then(response => response.json());
   assert.equal(preview.redactionEnabled, true);
   assert.deepEqual(preview.fields, ["title", "sender", "occurredAt", "body"]);
+  assert.equal(preview.customRedactionTerms, 1);
   assert.equal(calls, 0);
 
   const analyzed = await fetch(`${app.base}/api/messages/${id}/analyze`, {
@@ -235,7 +245,7 @@ test("bulut AI yapılandırılsa bile yalnızca ileti başına onaylı çağrıd
   }).then(response => response.json());
   assert.equal(calls, 1);
   assert.equal(analyzed.analysis.provider, "yapay-zeka-maskeli");
-  assert.doesNotMatch(receivedInput, /ogretmen@example\.com|0532 123 45 67/);
+  assert.doesNotMatch(receivedInput, /ogretmen@example\.com|0532 123 45 67|Deniz/i);
   assert.doesNotMatch(receivedInput, /Çocuğum/);
   assert.match(receivedInput, /E-POSTA MASKELENDİ|TELEFON MASKELENDİ/);
 });
@@ -287,6 +297,14 @@ test("birden fazla çocuk profilini birbirinden ayırır", async t => {
     body: JSON.stringify({ name: "İkinci profil" })
   }).then(response => response.json());
 
+  await fetch(`${app.base}/api/profiles/${initialProfiles[0].id}/redactions`, {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ terms: ["Ada"] })
+  });
+  const secondRedactions = await fetch(`${app.base}/api/profiles/${secondProfile.id}/redactions`).then(response => response.json());
+  assert.deepEqual(secondRedactions.terms, []);
+
   for (const profileId of [initialProfiles[0].id, secondProfile.id]) {
     const imported = await fetch(`${app.base}/api/messages`, {
       method: "POST",
@@ -314,6 +332,9 @@ test("birden fazla çocuk profilini birbirinden ayırır", async t => {
 
   const exported = await fetch(`${app.base}/api/export`).then(response => response.json());
   assert.equal(exported.profiles.length, 2);
+  assert.equal(exported.redactions.length, 1);
+  assert.equal(exported.redactions[0].profileId, initialProfiles[0].id);
+  assert.equal(exported.redactions[0].term, "Ada");
   assert.equal(exported.items.length, 1);
   assert.equal(exported.items[0].profileName, "İkinci profil");
 });

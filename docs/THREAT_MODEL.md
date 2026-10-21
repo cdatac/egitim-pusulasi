@@ -33,7 +33,7 @@ Tarayıcı ile yerel API aynı `127.0.0.1` kökenindedir. Bağlayıcı sınırı
 | Kötü niyetli web sayfasının yerel API'ye istek göndermesi | Host/Origin doğrulaması, yalnızca localhost dinleme, CSP | Aynı kullanıcı hesabındaki kötü amaçlı yerel yazılım bu sınıra dahil değildir |
 | Okul kimlik bilgilerinin kaydedilmesi veya Git'e girmesi | Bağlayıcı sözleşmesinde sır alanlarının reddi, `.gitignore`, geçmişi tarayan yayın denetimi | Yeni ve beklenmeyen sır biçimleri elle inceleme gerektirebilir |
 | Çocuk verisinin izinsiz AI servisine gönderilmesi | AI varsayılan kapalı, ileti başına açık onay, gönderim önizlemesi | Kullanıcının seçtiği sağlayıcının saklama koşulları ayrıca değerlendirilmelidir |
-| Gereksiz kişisel bilginin buluta gitmesi | E-posta/telefon maskeleme, profil adını göndermeme | Kişi adları ve serbest metindeki dolaylı tanımlayıcılar henüz otomatik maskelenmez |
+| Gereksiz kişisel bilginin buluta gitmesi | E-posta/telefon maskeleme, profil adını göndermeme, profil bazlı kullanıcı maskeleme listesi | Kullanıcının listeye eklemediği dolaylı tanımlayıcılar otomatik tanınmayabilir |
 | Profiller arası veri karışması | Sorgu, pano, içe aktarma ve silmede profil kimliği doğrulaması; API testleri | Bilgisayar hesabını paylaşan kişiler aynı yerel uygulamaya erişebilir |
 | Bağlayıcının okul sisteminde değişiklik yapması | Salt okunur sözleşme ve ürün ilkesi | Gerçek uç noktalar doğrulanana kadar K12 ağ bağlayıcısı etkin değildir |
 | Uydurma AI özeti veya yanlış tarih | Kaynak ileti her analizle birlikte korunur, yerel çıkarım testleri | AI çıktısı ebeveyn doğrulaması olmadan kesin bilgi sayılmamalıdır |
@@ -51,7 +51,6 @@ Tarayıcı ile yerel API aynı `127.0.0.1` kökenindedir. Bağlayıcı sınırı
 
 - K12 çalışma zamanı çağrılarının kullanıcı oturumunda salt okunur olduğunun doğrulanması
 - Oturum sırları gerekiyorsa işletim sistemi kasası veya yalnızca bellek yaklaşımının uygulanması
-- Kişi adları için kullanıcı yönetimli maskeleme listesi
 - Yerel veritabanı şifrelemesi ve yedekleme tehditlerinin değerlendirilmesi
 - Seçilecek AI sağlayıcıları için veri saklama ve eğitim koşullarının belgelenmesi
 
