@@ -8,6 +8,7 @@ import { DatabaseSync } from "node:sqlite";
 import { analyzeMessage, cloudAiPreview, isCloudAiConfigured } from "./lib/analyze.mjs";
 import { ConnectorValidationError, connectorDescriptors, normalizeConnectorItems } from "./lib/connectors/contract.mjs";
 import { buildDigest, DigestValidationError } from "./lib/digest.mjs";
+import { buildCalendar } from "./lib/calendar.mjs";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(ROOT, "data");
@@ -324,6 +325,23 @@ async function api(req, res, url) {
     const anchor = url.searchParams.get("anchor") || new Date();
     const messages = db.prepare(`${selectSql} WHERE m.profile_id = ? ORDER BY COALESCE(m.occurred_at, m.created_at) DESC`).all(profileId).map(rowToMessage);
     return json(res, 200, buildDigest(messages, { period, anchor }));
+  }
+  if (req.method === "GET" && url.pathname === "/api/calendar.ics") {
+    const profileId = resolveProfileId(url.searchParams.get("profileId"));
+    const profile = db.prepare("SELECT name FROM profiles WHERE id = ?").get(profileId);
+    const messages = db.prepare(`${selectSql} WHERE m.profile_id = ? ORDER BY COALESCE(m.occurred_at, m.created_at) DESC`).all(profileId).map(rowToMessage);
+    const calendar = buildCalendar(messages, { calendarName: `Eğitim Pusulası · ${profile.name}` });
+    res.writeHead(200, {
+      "content-type": "text/calendar; charset=utf-8",
+      "content-disposition": "attachment; filename=egitim-pusulasi.ics",
+      "content-length": Buffer.byteLength(calendar.content),
+      "cache-control": "no-store",
+      "x-content-type-options": "nosniff",
+      "x-calendar-events": String(calendar.eventCount),
+      "x-calendar-omitted-dates": String(calendar.omittedDateCount)
+    });
+    res.end(calendar.content);
+    return true;
   }
   return false;
 }

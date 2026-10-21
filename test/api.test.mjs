@@ -54,7 +54,7 @@ test("sağlık, içe aktarma, analiz ve pano akışı", async t => {
       source: "test",
       externalId: "duyuru-1",
       title: "Matematik ödevi",
-      body: "Yarın çalışma kağıdını teslim ediniz.",
+      body: "Yarın, 21.10.2026 tarihinde çalışma kağıdını teslim ediniz.",
       occurredAt: "2026-10-21T10:00:00+03:00"
     })
   });
@@ -84,6 +84,15 @@ test("sağlık, içe aktarma, analiz ve pano akışı", async t => {
   assert.match(digest.note, /alınma tarihine/);
   const invalidDigest = await fetch(`${app.base}/api/digest?profileId=${imported.items[0].profileId}&period=month`);
   assert.equal(invalidDigest.status, 400);
+
+  const calendarResponse = await fetch(`${app.base}/api/calendar.ics?profileId=${imported.items[0].profileId}`);
+  const calendar = await calendarResponse.text();
+  assert.equal(calendarResponse.status, 200);
+  assert.equal(calendarResponse.headers.get("content-type"), "text/calendar; charset=utf-8");
+  assert.equal(calendarResponse.headers.get("x-calendar-events"), "1");
+  assert.equal(calendarResponse.headers.get("x-calendar-omitted-dates"), "1");
+  assert.match(calendar, /DTSTART;VALUE=DATE:20261021/);
+  assert.match(calendar, new RegExp(`Kaynak ileti: #${imported.items[0].id}`));
 
   const search = await fetch(`${app.base}/api/messages?q=çalışma`).then(response => response.json());
   assert.equal(search.length, 1);

@@ -23,3 +23,5 @@ Proje telemetri, reklam tanımlayıcısı veya davranışsal profil toplamaz. Pr
 ## Kullanıcının kontrolü
 
 Mevcut sürüm; profilleriyle birlikte JSON veri dışa aktarma, seçili iletiyi silme ve seçili profile ait tüm yerel mesajlarla analizleri temizleme işlevleri sunar.
+
+Takvim dışa aktarımı yalnızca kullanıcının düğmeye basmasıyla yerel bir `.ics` dosyası oluşturur. Dosya ileti başlığı, kaynaklı özet, açık görev ve profil adını içerebilir. Kullanıcı bu dosyayı haricî bir takvim servisine yüklerse o servisin gizlilik koşulları geçerli olur.

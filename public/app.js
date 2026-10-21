@@ -211,6 +211,22 @@ $("#export").addEventListener("click", async () => {
   URL.revokeObjectURL(url);
 });
 
+$("#calendar").addEventListener("click", async () => {
+  const response = await fetch(`/api/calendar.ics?profileId=${encodeURIComponent(activeProfileId)}`);
+  if (!response.ok) return alert("Takvim dışa aktarılamadı.");
+  const eventCount = Number(response.headers.get("x-calendar-events") ?? 0);
+  const omitted = Number(response.headers.get("x-calendar-omitted-dates") ?? 0);
+  if (!eventCount) return alert("Takvime eklenebilecek, yılı açıkça yazılmış sayısal bir tarih bulunamadı.");
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `egitim-pusulasi-takvim-${new Date().toISOString().slice(0, 10)}.ics`;
+  link.click();
+  URL.revokeObjectURL(url);
+  if (omitted) alert(`${eventCount} takvim olayı indirildi. Tahmin yapılmaması için ${omitted} belirsiz veya yılı eksik tarih takvime eklenmedi.`);
+});
+
 $("#clear").addEventListener("click", async () => {
   const profileName = profiles.find(profile => profile.id === activeProfileId)?.name ?? "bu profil";
   if (!confirm(`${profileName} için tüm yerel mesajlar ve analizler kalıcı olarak silinsin mi? Bu işlem geri alınamaz.`)) return;
