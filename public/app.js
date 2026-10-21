@@ -2,6 +2,8 @@ const $ = selector => document.querySelector(selector);
 const feed = $("#feed");
 let messages = [];
 let aiConfigured = false;
+let profiles = [];
+let activeProfileId = null;
 
 function esc(value = "") {
   return String(value).replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
@@ -37,10 +39,12 @@ function render() {
 }
 
 async function refresh(q = "") {
+  if (!activeProfileId) return;
+  const profile = `profileId=${encodeURIComponent(activeProfileId)}`;
   const [health, dashboard, list] = await Promise.all([
     fetch("/api/health").then(r => r.json()),
-    fetch("/api/dashboard").then(r => r.json()),
-    fetch(`/api/messages?q=${encodeURIComponent(q)}`).then(r => r.json())
+    fetch(`/api/dashboard?${profile}`).then(r => r.json()),
+    fetch(`/api/messages?${profile}&q=${encodeURIComponent(q)}`).then(r => r.json())
   ]);
   aiConfigured = health.aiConfigured;
   $("#ai-state").textContent = health.aiConfigured ? "AI hazır · onaylı" : "Yerel analiz";
@@ -48,6 +52,15 @@ async function refresh(q = "") {
   $("#urgent").textContent = dashboard.urgent;
   messages = list;
   render();
+}
+
+async function loadProfiles() {
+  profiles = await fetch("/api/profiles").then(response => response.json());
+  const saved = Number(localStorage.getItem("egitim-pusulasi-profile"));
+  activeProfileId = profiles.some(profile => profile.id === saved) ? saved : profiles[0]?.id;
+  const select = $("#profile-select");
+  select.innerHTML = profiles.map(profile => `<option value="${profile.id}">${esc(profile.name)}</option>`).join("");
+  select.value = String(activeProfileId ?? "");
 }
 
 function parseImport(text) {
@@ -61,7 +74,8 @@ $("#import").addEventListener("click", async () => {
   const items = parseImport($("#import-text").value);
   if (!items.length) return;
   $("#feedback").textContent = "İşleniyor…";
-  const response = await fetch("/api/messages", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ items }) });
+  const scopedItems = items.map(item => ({ ...item, profileId: activeProfileId }));
+  const response = await fetch("/api/messages", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ items: scopedItems }) });
   const result = await response.json();
   $("#feedback").textContent = response.ok ? `${result.imported} ileti eklendi` : result.error;
   if (response.ok) $("#import-text").value = "";
@@ -76,6 +90,29 @@ let timer;
 $("#search").addEventListener("input", event => {
   clearTimeout(timer);
   timer = setTimeout(() => refresh(event.target.value), 180);
+});
+
+$("#profile-select").addEventListener("change", async event => {
+  activeProfileId = Number(event.target.value);
+  localStorage.setItem("egitim-pusulasi-profile", String(activeProfileId));
+  await refresh($("#search").value);
+});
+
+$("#add-profile").addEventListener("click", async () => {
+  const name = prompt("Çocuk için yerel bir ad veya takma ad girin:");
+  if (!name?.trim()) return;
+  const response = await fetch("/api/profiles", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ name: name.trim() })
+  });
+  const profile = await response.json();
+  if (!response.ok) return alert(profile.error ?? "Profil oluşturulamadı.");
+  await loadProfiles();
+  activeProfileId = profile.id;
+  $("#profile-select").value = String(profile.id);
+  localStorage.setItem("egitim-pusulasi-profile", String(profile.id));
+  await refresh();
 });
 
 feed.addEventListener("click", async event => {
@@ -120,12 +157,13 @@ $("#export").addEventListener("click", async () => {
 });
 
 $("#clear").addEventListener("click", async () => {
-  if (!confirm("Tüm yerel mesajlar ve analizler kalıcı olarak silinsin mi? Bu işlem geri alınamaz.")) return;
-  const response = await fetch("/api/messages", { method: "DELETE" });
+  const profileName = profiles.find(profile => profile.id === activeProfileId)?.name ?? "bu profil";
+  if (!confirm(`${profileName} için tüm yerel mesajlar ve analizler kalıcı olarak silinsin mi? Bu işlem geri alınamaz.`)) return;
+  const response = await fetch(`/api/messages?profileId=${encodeURIComponent(activeProfileId)}`, { method: "DELETE" });
   if (!response.ok) return alert("Veriler temizlenemedi.");
   await refresh();
 });
 
-refresh().catch(error => {
+loadProfiles().then(() => refresh()).catch(error => {
   feed.innerHTML = `<div class="empty"><strong>Bağlantı kurulamadı.</strong><span>${esc(error.message)}</span></div>`;
 });

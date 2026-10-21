@@ -14,8 +14,15 @@ const db = new DatabaseSync(path.join(DATA_DIR, "egitim-pusulasi.db"));
 db.exec(`
   PRAGMA foreign_keys = ON;
   PRAGMA journal_mode = WAL;
+  CREATE TABLE IF NOT EXISTS profiles (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    is_default INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
   CREATE TABLE IF NOT EXISTS messages (
     id INTEGER PRIMARY KEY,
+    profile_id INTEGER REFERENCES profiles(id) ON DELETE CASCADE,
     source TEXT NOT NULL DEFAULT 'manual',
     external_id TEXT,
     kind TEXT NOT NULL DEFAULT 'message',
@@ -39,6 +46,15 @@ db.exec(`
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 `);
+
+const messageColumns = db.prepare("PRAGMA table_info(messages)").all();
+if (!messageColumns.some(column => column.name === "profile_id")) {
+  db.exec("ALTER TABLE messages ADD COLUMN profile_id INTEGER REFERENCES profiles(id) ON DELETE CASCADE");
+}
+db.prepare(`INSERT INTO profiles(name, is_default) SELECT ?, 1 WHERE NOT EXISTS (SELECT 1 FROM profiles)`).run("Çocuğum");
+const defaultProfileId = Number(db.prepare("SELECT id FROM profiles ORDER BY is_default DESC, id ASC LIMIT 1").get().id);
+db.prepare("UPDATE messages SET profile_id = ? WHERE profile_id IS NULL").run(defaultProfileId);
+db.prepare(`UPDATE messages SET external_id = CAST(profile_id AS TEXT) || ':' || external_id WHERE external_id IS NOT NULL AND external_id NOT LIKE CAST(profile_id AS TEXT) || ':%'`).run();
 
 function json(res, status, value) {
   const body = JSON.stringify(value);
@@ -64,10 +80,13 @@ async function bodyJson(req) {
 }
 
 function rowToMessage(row) {
+  const storedPrefix = `${row.profile_id}:`;
   return {
     id: row.id,
+    profileId: row.profile_id,
+    profileName: row.profile_name,
     source: row.source,
-    externalId: row.external_id,
+    externalId: row.external_id?.startsWith(storedPrefix) ? row.external_id.slice(storedPrefix.length) : row.external_id,
     kind: row.kind,
     title: row.title,
     body: row.body,
@@ -90,8 +109,10 @@ function rowToMessage(row) {
 
 const selectSql = `
   SELECT m.*, a.summary, a.category, a.priority, a.action_items, a.dates,
-         a.confidence, a.provider, a.updated_at
-  FROM messages m LEFT JOIN analyses a ON a.message_id = m.id
+         a.confidence, a.provider, a.updated_at, p.name AS profile_name
+  FROM messages m
+  JOIN profiles p ON p.id = m.profile_id
+  LEFT JOIN analyses a ON a.message_id = m.id
 `;
 
 function getMessage(id) {
@@ -116,14 +137,25 @@ async function runAnalysis(id, mode = "local") {
   return getMessage(id);
 }
 
-async function importItems(items) {
-  const insert = db.prepare(`INSERT OR IGNORE INTO messages(source, external_id, kind, title, body, sender, occurred_at, source_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+function resolveProfileId(value) {
+  const profileId = value == null || value === "" ? defaultProfileId : Number(value);
+  if (!Number.isInteger(profileId) || profileId < 1) throw new ProfileValidationError("Geçersiz çocuk profili");
+  if (!db.prepare("SELECT 1 FROM profiles WHERE id = ?").get(profileId)) throw new ProfileValidationError("Çocuk profili bulunamadı");
+  return profileId;
+}
+
+class ProfileValidationError extends Error {}
+
+async function importItems(items, fallbackProfileId = defaultProfileId) {
+  const insert = db.prepare(`INSERT OR IGNORE INTO messages(profile_id, source, external_id, kind, title, body, sender, occurred_at, source_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const ids = [];
   for (const item of items.slice(0, 250)) {
+    const profileId = resolveProfileId(item.profileId ?? fallbackProfileId);
     const title = String(item.title ?? "Başlıksız").trim().slice(0, 400);
     const body = String(item.body ?? "").trim().slice(0, 40_000);
     if (!body) continue;
-    const result = insert.run(String(item.source ?? "manual"), item.externalId ? String(item.externalId) : null,
+    const storedExternalId = item.externalId ? `${profileId}:${String(item.externalId)}` : null;
+    const result = insert.run(profileId, String(item.source ?? "manual"), storedExternalId,
       String(item.kind ?? "message"), title, body, item.sender ? String(item.sender) : null,
       item.occurredAt ? String(item.occurredAt) : null, item.sourceUrl ? String(item.sourceUrl) : null);
     if (result.changes > 0) ids.push(Number(result.lastInsertRowid));
@@ -138,10 +170,25 @@ async function api(req, res, url) {
   }
   if (req.method === "GET" && url.pathname === "/api/messages") {
     const query = url.searchParams.get("q")?.trim();
-    const rows = query
-      ? db.prepare(`${selectSql} WHERE m.title LIKE ? OR m.body LIKE ? ORDER BY COALESCE(m.occurred_at, m.created_at) DESC`).all(`%${query}%`, `%${query}%`)
-      : db.prepare(`${selectSql} ORDER BY COALESCE(m.occurred_at, m.created_at) DESC`).all();
+    const profileId = url.searchParams.has("profileId") ? resolveProfileId(url.searchParams.get("profileId")) : null;
+    const clauses = [];
+    const parameters = [];
+    if (profileId) { clauses.push("m.profile_id = ?"); parameters.push(profileId); }
+    if (query) { clauses.push("(m.title LIKE ? OR m.body LIKE ?)"); parameters.push(`%${query}%`, `%${query}%`); }
+    const where = clauses.length ? ` WHERE ${clauses.join(" AND ")}` : "";
+    const rows = db.prepare(`${selectSql}${where} ORDER BY COALESCE(m.occurred_at, m.created_at) DESC`).all(...parameters);
     return json(res, 200, rows.map(rowToMessage));
+  }
+  if (req.method === "GET" && url.pathname === "/api/profiles") {
+    return json(res, 200, db.prepare("SELECT id, name, is_default AS isDefault, created_at AS createdAt FROM profiles ORDER BY is_default DESC, id ASC").all());
+  }
+  if (req.method === "POST" && url.pathname === "/api/profiles") {
+    const payload = await bodyJson(req);
+    const name = String(payload.name ?? "").trim().slice(0, 80);
+    if (!name) return json(res, 400, { error: "Profil adı boş olamaz" });
+    const result = db.prepare("INSERT INTO profiles(name, is_default) VALUES (?, 0)").run(name);
+    const profile = db.prepare("SELECT id, name, is_default AS isDefault, created_at AS createdAt FROM profiles WHERE id = ?").get(result.lastInsertRowid);
+    return json(res, 201, profile);
   }
   if (req.method === "GET" && url.pathname === "/api/connectors") {
     return json(res, 200, connectorDescriptors);
@@ -149,9 +196,10 @@ async function api(req, res, url) {
   if (req.method === "GET" && url.pathname === "/api/export") {
     const items = db.prepare(`${selectSql} ORDER BY COALESCE(m.occurred_at, m.created_at) DESC`).all().map(rowToMessage);
     return json(res, 200, {
-      schemaVersion: 1,
+      schemaVersion: 2,
       exportedAt: new Date().toISOString(),
       product: "Eğitim Pusulası",
+      profiles: db.prepare("SELECT id, name, is_default AS isDefault, created_at AS createdAt FROM profiles ORDER BY id").all(),
       items
     });
   }
@@ -166,7 +214,8 @@ async function api(req, res, url) {
     try {
       const payload = await bodyJson(req);
       const items = normalizeConnectorItems(connectorImportMatch[1], payload.records);
-      const ids = await importItems(items);
+      const profileId = resolveProfileId(payload.profileId);
+      const ids = await importItems(items, profileId);
       return json(res, 201, { connector: connectorImportMatch[1], imported: ids.length, items: ids.map(getMessage) });
     } catch (error) {
       if (error instanceof ConnectorValidationError) return json(res, 400, { error: error.message });
@@ -200,13 +249,19 @@ async function api(req, res, url) {
     return result.changes > 0 ? json(res, 200, { deleted: 1 }) : json(res, 404, { error: "Mesaj bulunamadı" });
   }
   if (req.method === "DELETE" && url.pathname === "/api/messages") {
-    const result = db.prepare("DELETE FROM messages").run();
+    const profileId = url.searchParams.has("profileId") ? resolveProfileId(url.searchParams.get("profileId")) : null;
+    const result = profileId
+      ? db.prepare("DELETE FROM messages WHERE profile_id = ?").run(profileId)
+      : db.prepare("DELETE FROM messages").run();
     return json(res, 200, { deleted: Number(result.changes) });
   }
   if (req.method === "GET" && url.pathname === "/api/dashboard") {
-    const counts = db.prepare(`SELECT COUNT(*) total, SUM(CASE WHEN a.priority='yüksek' THEN 1 ELSE 0 END) urgent FROM messages m LEFT JOIN analyses a ON a.message_id=m.id`).get();
-    const categories = db.prepare(`SELECT COALESCE(a.category, 'İşlenmedi') category, COUNT(*) count FROM messages m LEFT JOIN analyses a ON a.message_id=m.id GROUP BY category ORDER BY count DESC`).all();
-    const recent = db.prepare(`${selectSql} ORDER BY COALESCE(m.occurred_at, m.created_at) DESC LIMIT 5`).all().map(rowToMessage);
+    const profileId = url.searchParams.has("profileId") ? resolveProfileId(url.searchParams.get("profileId")) : null;
+    const profileWhere = profileId ? " WHERE m.profile_id = ?" : "";
+    const args = profileId ? [profileId] : [];
+    const counts = db.prepare(`SELECT COUNT(*) total, SUM(CASE WHEN a.priority='yüksek' THEN 1 ELSE 0 END) urgent FROM messages m LEFT JOIN analyses a ON a.message_id=m.id${profileWhere}`).get(...args);
+    const categories = db.prepare(`SELECT COALESCE(a.category, 'İşlenmedi') category, COUNT(*) count FROM messages m LEFT JOIN analyses a ON a.message_id=m.id${profileWhere} GROUP BY category ORDER BY count DESC`).all(...args);
+    const recent = db.prepare(`${selectSql}${profileWhere} ORDER BY COALESCE(m.occurred_at, m.created_at) DESC LIMIT 5`).all(...args).map(rowToMessage);
     return json(res, 200, { total: Number(counts.total ?? 0), urgent: Number(counts.urgent ?? 0), categories, recent });
   }
   return false;
@@ -248,6 +303,7 @@ const server = http.createServer(async (req, res) => {
     });
     res.end(data);
   } catch (error) {
+    if (error instanceof ProfileValidationError) return json(res, 400, { error: error.message });
     json(res, 500, { error: error.message });
   }
 });

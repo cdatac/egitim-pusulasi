@@ -5,11 +5,12 @@ import { createServer } from "node:http";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
 
 const root = path.resolve(import.meta.dirname, "..");
 
-async function startServer(extraEnv = {}) {
-  const dataDir = await mkdtemp(path.join(tmpdir(), "egitim-pusulasi-test-"));
+async function startServer(extraEnv = {}, preparedDataDir = null) {
+  const dataDir = preparedDataDir ?? await mkdtemp(path.join(tmpdir(), "egitim-pusulasi-test-"));
   const port = 42000 + Math.floor(Math.random() * 1000);
   const child = spawn(process.execPath, ["--disable-warning=ExperimentalWarning", "server.mjs"], {
     cwd: root,
@@ -78,7 +79,7 @@ test("sağlık, içe aktarma, analiz ve pano akışı", async t => {
   assert.match(search[0].body, /çalışma kağıdı/);
 
   const exported = await fetch(`${app.base}/api/export`).then(response => response.json());
-  assert.equal(exported.schemaVersion, 1);
+  assert.equal(exported.schemaVersion, 2);
   assert.equal(exported.product, "Eğitim Pusulası");
   assert.equal(exported.items.length, 1);
   assert.equal(exported.items[0].analysis.category, "Ödev");
@@ -187,6 +188,7 @@ test("bulut AI yapılandırılsa bile yalnızca ileti başına onaylı çağrıd
   assert.equal(calls, 1);
   assert.equal(analyzed.analysis.provider, "yapay-zeka-maskeli");
   assert.doesNotMatch(receivedInput, /ogretmen@example\.com|0532 123 45 67/);
+  assert.doesNotMatch(receivedInput, /Çocuğum/);
   assert.match(receivedInput, /E-POSTA MASKELENDİ|TELEFON MASKELENDİ/);
 });
 
@@ -222,4 +224,74 @@ test("K12 bağlayıcı sözleşmesi kayıtları içe aktarır, tekrarları ayık
   });
   assert.equal(rejected.status, 400);
   assert.match((await rejected.json()).error, /kimlik bilgisi/);
+});
+
+test("birden fazla çocuk profilini birbirinden ayırır", async t => {
+  const app = await startServer();
+  t.after(() => app.close());
+  const initialProfiles = await fetch(`${app.base}/api/profiles`).then(response => response.json());
+  assert.equal(initialProfiles.length, 1);
+  assert.equal(initialProfiles[0].name, "Çocuğum");
+
+  const secondProfile = await fetch(`${app.base}/api/profiles`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ name: "İkinci profil" })
+  }).then(response => response.json());
+
+  for (const profileId of [initialProfiles[0].id, secondProfile.id]) {
+    const imported = await fetch(`${app.base}/api/messages`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ profileId, source: "test", externalId: "aynı-okul-kimliği", title: "Ortak duyuru", body: "Her çocuk için ayrı kayıt." })
+    }).then(response => response.json());
+    assert.equal(imported.imported, 1);
+    assert.equal(imported.items[0].profileId, profileId);
+    assert.equal(imported.items[0].externalId, "aynı-okul-kimliği");
+  }
+
+  const firstDashboard = await fetch(`${app.base}/api/dashboard?profileId=${initialProfiles[0].id}`).then(response => response.json());
+  const secondDashboard = await fetch(`${app.base}/api/dashboard?profileId=${secondProfile.id}`).then(response => response.json());
+  assert.equal(firstDashboard.total, 1);
+  assert.equal(secondDashboard.total, 1);
+
+  await fetch(`${app.base}/api/messages?profileId=${initialProfiles[0].id}`, { method: "DELETE" });
+  assert.equal((await fetch(`${app.base}/api/dashboard?profileId=${initialProfiles[0].id}`).then(response => response.json())).total, 0);
+  assert.equal((await fetch(`${app.base}/api/dashboard?profileId=${secondProfile.id}`).then(response => response.json())).total, 1);
+
+  const exported = await fetch(`${app.base}/api/export`).then(response => response.json());
+  assert.equal(exported.profiles.length, 2);
+  assert.equal(exported.items.length, 1);
+  assert.equal(exported.items[0].profileName, "İkinci profil");
+});
+
+test("eski tek-profilli veritabanını veri kaybetmeden yükseltir", async t => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "egitim-pusulasi-legacy-"));
+  const legacy = new DatabaseSync(path.join(dataDir, "egitim-pusulasi.db"));
+  legacy.exec(`
+    CREATE TABLE messages (
+      id INTEGER PRIMARY KEY, source TEXT NOT NULL DEFAULT 'manual', external_id TEXT,
+      kind TEXT NOT NULL DEFAULT 'message', title TEXT NOT NULL, body TEXT NOT NULL,
+      sender TEXT, occurred_at TEXT, source_url TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(source, external_id)
+    );
+    CREATE TABLE analyses (
+      message_id INTEGER PRIMARY KEY REFERENCES messages(id) ON DELETE CASCADE,
+      summary TEXT NOT NULL, category TEXT NOT NULL, priority TEXT NOT NULL,
+      action_items TEXT NOT NULL, dates TEXT NOT NULL, confidence REAL NOT NULL,
+      provider TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    INSERT INTO messages(source, external_id, title, body) VALUES ('manual', 'legacy-1', 'Eski ileti', 'Korunacak içerik');
+  `);
+  legacy.close();
+
+  const app = await startServer({}, dataDir);
+  t.after(() => app.close());
+  const profiles = await fetch(`${app.base}/api/profiles`).then(response => response.json());
+  const messages = await fetch(`${app.base}/api/messages?profileId=${profiles[0].id}`).then(response => response.json());
+  assert.equal(profiles.length, 1);
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0].title, "Eski ileti");
+  assert.equal(messages[0].externalId, "legacy-1");
+  assert.equal(messages[0].profileId, profiles[0].id);
 });

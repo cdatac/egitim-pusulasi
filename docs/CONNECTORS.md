@@ -28,8 +28,10 @@ Sözleşme; `password`, `token`, `accessToken`, `refreshToken`, `cookie`, `autho
 POST /api/connectors/k12/import
 Content-Type: application/json
 
-{"records":[...]}
+{"profileId":1,"records":[...]}
 ```
+
+`profileId`, kaydın hangi çocuk profiline ait olduğunu belirler ve mevcut bir profil olmalıdır. Aynı okul ileti kimliği farklı profillerde bağımsız olarak saklanabilir.
 
 Mevcut K12 tanımı `read-only` durumundadır. Ağ uygulaması, kullanıcının kendi oturumunda duyuru ve mesaj çağrıları çalışma zamanında doğrulanana kadar bilinçli olarak etkin değildir.
 
