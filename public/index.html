@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Eğitim Pusulası</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div>
+        <p class="eyebrow">EBEVEYN KONTROLLÜ · YEREL</p>
+        <h1>Eğitim Pusulası</h1>
+        <p class="subtitle">Okul mesajlarını anlaşılır görevlere ve tarihlere dönüştürür.</p>
+      </div>
+      <span id="ai-state" class="status">Bağlanıyor…</span>
+    </header>
+
+    <main>
+      <section class="stats" aria-label="Özet">
+        <article><span id="total">0</span><small>toplam ileti</small></article>
+        <article class="urgent"><span id="urgent">0</span><small>öncelikli</small></article>
+        <article><span id="tasks">0</span><small>açık görev</small></article>
+      </section>
+
+      <section class="panel composer">
+        <div>
+          <p class="eyebrow">HIZLI İÇE AKTAR</p>
+          <h2>Duyuru veya mesaj ekle</h2>
+          <p>İlk satır başlık kabul edilir. Birden fazla iletiyi <code>---</code> satırıyla ayırabilirsiniz.</p>
+        </div>
+        <textarea id="import-text" placeholder="Fen projesi\nCuma gününe kadar proje teslim edilecektir. Karton ve LED getiriniz."></textarea>
+        <div class="row">
+          <button id="import">İşle ve ekle</button>
+          <button id="demo" class="ghost">Örnek yükle</button>
+          <span id="feedback" role="status"></span>
+        </div>
+      </section>
+
+      <section class="toolbar">
+        <div>
+          <p class="eyebrow">GÜNLÜK AKIŞ</p>
+          <h2>Mesajlar ve yapılacaklar</h2>
+        </div>
+        <input id="search" type="search" placeholder="Mesajlarda ara…">
+      </section>
+      <section id="feed" class="feed" aria-live="polite"></section>
+    </main>
+  </div>
+  <template id="empty-template">
+    <div class="empty"><strong>Henüz ileti yok.</strong><span>K12 bağlayıcısı hazır olana kadar yukarıdan bir duyuru ekleyebilirsiniz.</span></div>
+  </template>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

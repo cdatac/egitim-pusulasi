@@ -1,0 +1,72 @@
+# Eğitim Pusulası yol haritası
+
+## Nihai hedef
+
+Çocukların okul duyuru ve mesajlarını ebeveyn kontrolünde anlamlandıran, ücretsiz ve açık kaynak, kolay kurulabilir bir eğitim takip sistemi yayımlamak.
+
+## Değişmez ilkeler
+
+- Yerel öncelikli çalışma; mümkün olan veriler kullanıcının cihazında kalır.
+- K12 ve diğer okul sistemlerine varsayılan olarak salt okunur erişim.
+- Çocuk verilerinin reklam, profil çıkarma veya model eğitimi amacıyla kullanılmaması.
+- Her AI özetinin özgün iletiye geri bağlanması.
+- Otomatik mesaj gönderme, yoklama veya not değiştirme gibi eylemlerin çekirdek üründe bulunmaması.
+- Parola, oturum çerezi, API anahtarı, gerçek okul mesajı, APK veya özel okul varlığının GitHub'a konmaması.
+- Özel uygulama kodunu kopyalamadan, belgelenmiş davranış ve temiz oda uygulamasıyla geliştirme.
+
+## Aşamalar
+
+### 0. Güvenli temel — sürüyor
+
+- [x] Yerel web prototipi
+- [x] SQLite veri modeli
+- [x] Kaynak mesajı koruyan özet kartları
+- [x] Yerel kategori, tarih ve görev çıkarma
+- [x] Hassas dosyalar için `.gitignore`
+- [x] Birim ve API testleri
+- [x] Yapılandırma şeması ve `.env.example`
+
+### 1. K12 salt okunur bağlayıcı
+
+- [ ] Duyuru ve mesaj isteklerini yetkili kullanıcı oturumunda doğrulama
+- [ ] Oturum bilgilerinin bellekte veya işletim sistemi kasasında tutulması
+- [ ] Tekrarlı iletileri güvenilir biçimde ayıklama
+- [ ] Yenileme, hata ve oturum süresi dolma davranışları
+- [ ] Gerçek veri içermeyen kayıtlı test örnekleri
+
+### 2. Ebeveyn asistanı
+
+- [ ] Kaynaklı günlük/haftalık özet
+- [ ] Ödev, sınav, etkinlik, ödeme ve malzeme çıkarma
+- [ ] Takvim dışa aktarma
+- [ ] Mesajlar üzerinde kaynaklı soru-cevap
+- [ ] Bulut AI ve yerel model seçenekleri
+- [ ] Gönderilecek alanlar için görünür gizlilik önizlemesi
+
+### 3. Herkes için dağıtım
+
+- [ ] Windows/macOS/Linux için kolay çalıştırma
+- [ ] Docker seçeneği
+- [ ] İlk kurulum sihirbazı
+- [ ] Türkçe kullanım ve güvenlik belgeleri
+- [ ] Erişilebilirlik ve mobil uyum
+
+### 4. Açık kaynak yayını
+
+- [ ] Lisans seçimi
+- [ ] Katkı rehberi ve davranış kuralları
+- [ ] Güvenlik bildirim politikası
+- [ ] Tehdit modeli ve gizlilik belgesi
+- [x] Otomatik test/kalite iş akışı
+- [ ] Herkese açık GitHub deposu ve ilk sürüm
+
+## Yayın kapıları
+
+GitHub deposu herkese açılmadan önce:
+
+1. Depo geçmişinde hassas veri bulunmadığı doğrulanır.
+2. K12 markasıyla resmî bağlantı izlenimi verilmez.
+3. Kullanıcı kendi hesabı ve verisi için açık onay verir.
+4. Varsayılan davranış salt okunurdur.
+5. Bulut AI kullanılıyorsa hangi verinin gönderileceği açıkça gösterilir.
+6. Lisans ve üçüncü taraf bağımlılıkları gözden geçirilir.

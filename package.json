@@ -1,0 +1,14 @@
+{
+  "name": "egitim-pusulasi",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning server.mjs",
+    "check": "node --check server.mjs && node --check lib/analyze.mjs && node --check public/app.js",
+    "test": "node --disable-warning=ExperimentalWarning --test"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  }
+}

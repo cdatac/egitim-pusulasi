@@ -1,0 +1,36 @@
+# Yerel okul verileri ve veritabanları
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# REA çıktıları, APK'lar ve tersine mühendislik çalışma dosyaları
+work/
+*.apk
+*.apks
+*.aab
+K12_REA_DEGERLENDIRME.md
+*.har
+*.saz
+*.pcap
+
+# Kimlik bilgileri ve yerel ayarlar
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Node ve editör çıktıları
+node_modules/
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Geçici/test çıktıları
+coverage/
+dist/
+tmp/
+*.log

@@ -1,0 +1,46 @@
+:root { color-scheme: light; --ink:#17201d; --muted:#68736e; --paper:#f5f3ec; --panel:#fffdf7; --line:#dedbd0; --green:#1f6b51; --mint:#dcebe3; --orange:#b8552b; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background:var(--paper); color:var(--ink); }
+body::before { content:""; position:fixed; inset:0; pointer-events:none; background:radial-gradient(circle at 85% 5%, #d8e9df 0, transparent 26rem), radial-gradient(circle at 10% 30%, #f4dfc8 0, transparent 24rem); opacity:.8; }
+.shell { position:relative; width:min(1100px, calc(100% - 32px)); margin:auto; padding:44px 0 80px; }
+header,.toolbar,.row,.message-head { display:flex; align-items:center; justify-content:space-between; gap:20px; }
+h1,h2,h3,p { margin-top:0; }
+h1 { font-family:Georgia, serif; font-size:clamp(2.6rem, 7vw, 5rem); line-height:.95; margin-bottom:14px; letter-spacing:-.04em; }
+h2 { font-family:Georgia, serif; font-size:1.8rem; margin-bottom:8px; }
+.subtitle { color:var(--muted); font-size:1.08rem; }
+.eyebrow { color:var(--green); font-size:.72rem; font-weight:800; letter-spacing:.17em; margin-bottom:10px; }
+.status,.chip { display:inline-flex; align-items:center; border:1px solid #aac7b8; background:var(--mint); color:var(--green); padding:7px 11px; border-radius:999px; font-weight:750; font-size:.75rem; }
+main { display:grid; gap:24px; margin-top:44px; }
+.stats { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.stats article { background:rgba(255,253,247,.86); border:1px solid var(--line); border-radius:18px; padding:21px; box-shadow:0 14px 36px rgba(37,48,43,.06); }
+.stats span { display:block; font-family:Georgia,serif; font-size:2.4rem; }
+.stats small { color:var(--muted); }
+.stats .urgent span { color:var(--orange); }
+.panel { background:var(--panel); border:1px solid var(--line); border-radius:24px; padding:28px; box-shadow:0 18px 50px rgba(37,48,43,.07); }
+.composer { display:grid; grid-template-columns:.8fr 1.2fr; gap:24px; }
+.composer .row { grid-column:1/-1; justify-content:flex-end; }
+textarea,input { width:100%; border:1px solid #c8c6bd; border-radius:14px; background:#fff; padding:14px 16px; font:inherit; color:inherit; outline:none; }
+textarea { min-height:150px; resize:vertical; }
+textarea:focus,input:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(31,107,81,.12); }
+button { border:0; border-radius:999px; background:var(--green); color:white; padding:12px 18px; font-weight:750; cursor:pointer; }
+button.ghost { background:transparent; color:var(--green); border:1px solid #aac7b8; }
+#feedback { color:var(--muted); font-size:.86rem; }
+.toolbar { margin-top:14px; align-items:end; }
+.toolbar input { max-width:300px; }
+.feed { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
+.message { background:rgba(255,253,247,.92); border:1px solid var(--line); border-radius:20px; padding:23px; box-shadow:0 12px 34px rgba(37,48,43,.05); }
+.message.high { border-left:5px solid var(--orange); }
+.message h3 { margin:18px 0 8px; font-size:1.12rem; }
+.message-head small { color:var(--muted); }
+.chip { padding:5px 9px; margin-right:6px; }
+.chip.date { background:#f7e9d9; border-color:#e2c8ac; color:#8c4829; }
+.summary { color:#33413b; line-height:1.55; }
+.actions { background:#eef4ef; border-radius:14px; padding:14px 16px; margin:16px 0; }
+.actions ul { margin:8px 0 0; padding-left:20px; }
+details { border-top:1px solid var(--line); padding-top:14px; color:var(--muted); }
+summary { cursor:pointer; font-weight:650; color:#50615a; }
+details p { white-space:pre-wrap; margin-top:12px; }
+.empty { grid-column:1/-1; display:grid; place-items:center; gap:8px; min-height:220px; border:1px dashed #b8b8ad; border-radius:20px; color:var(--muted); }
+.empty strong { color:var(--ink); }
+code { background:#eceae2; border-radius:6px; padding:2px 5px; }
+@media (max-width:720px) { .composer,.feed { grid-template-columns:1fr; } .composer .row { grid-column:auto; flex-wrap:wrap; } .stats { grid-template-columns:1fr; } header,.toolbar { align-items:flex-start; flex-direction:column; } .toolbar input { max-width:none; } }
