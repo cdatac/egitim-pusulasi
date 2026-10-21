@@ -16,6 +16,7 @@ Bildirimde gerçek parola, oturum çerezi, öğrenci adı, okul mesajı veya ekr
 - Host ve Origin doğrulaması, başka web sayfalarının yerel API'ye erişmesini sınırlar.
 - Arayüz sıkı Content Security Policy ile sunulur.
 - K12 bağlayıcıları salt okunur tasarlanır.
+- K12 bildirim dosyası içe aktarımı uygulama içi yönlendirme alanlarını atar; kimlik bilgisi alanı bulunan kayıtları reddeder ve K12'ye ağ isteği göndermez.
 - API anahtarları ve oturum bilgileri veritabanına yazılmaz.
 - Yerel veritabanı, APK'lar ve ağ kayıtları Git tarafından yok sayılır.
 - Uzak AI etkin değilse mesaj içeriği seçilen üçüncü tarafa gönderilmez.

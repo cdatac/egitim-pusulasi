@@ -40,3 +40,14 @@ test("depo içindeki Markdown bağlantıları var olan dosyalara gider", () => {
     }
   }
 });
+
+test("kamusal belgeler bağımsızlığı ve K12 bildirim veri minimizasyonunu açıklar", () => {
+  const readme = readFileSync(path.join(root, "README.md"), "utf8");
+  const privacy = readFileSync(path.join(root, "PRIVACY.md"), "utf8");
+  const security = readFileSync(path.join(root, "SECURITY.md"), "utf8");
+  assert.match(readme, /K12 veya okulunuzla resmî bağlantısı yoktur/);
+  assert.match(readme, /bildirim JSON dosyasını/);
+  assert.match(privacy, /intent.*portal.*query/s);
+  assert.match(privacy, /K12'ye ağ isteği göndermez/);
+  assert.match(security, /kimlik bilgisi alanı bulunan kayıtları reddeder/);
+});

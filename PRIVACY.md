@@ -11,6 +11,12 @@ Eğitim Pusulası çocukların okul verileriyle çalışır. Bu nedenle veri min
 - K12 parolası bu prototip tarafından saklanmaz.
 - İlk kurulum ekranı bu sınırları gösterir ve gerçek çocuk adı yerine takma ad kullanılmasını önerir.
 
+## K12 bildirim dosyaları
+
+Kullanıcı uyumlu bir bildirim JSON dosyasını kendisi seçerse yalnızca ileti başlığı, `message`/`body` gövdesi, isteğe bağlı gönderen, alınma zamanı, güvenli kaynak URL'si ve dış kimlik yerel kayda dönüştürülür. K12'nin uygulama içi `intent`, `portal` ve `query` yönlendirme alanları atılır. Parola, token, oturum, çerez veya yetkilendirme alanı bulunan kayıtlar tümüyle reddedilir.
+
+Bu içe aktarma işlemi K12'ye ağ isteği göndermez. Seçilen dosya tarayıcıdan yalnızca aynı bilgisayardaki Eğitim Pusulası sunucusuna aktarılır ve seçili çocuk profilinde saklanır.
+
 ## İsteğe bağlı AI servisi
 
 Kullanıcı `AI_API_URL` ve `AI_MODEL` değişkenlerini, uzak servis için ayrıca `AI_API_KEY` değerini kendisi ayarlasa bile içerik otomatik gönderilmez. Her ileti için ayrı **AI ile analiz et** işlemi ve gönderim onayı gerekir. Onay verilirse mesaj başlığı, gönderen, tarih ve gövde seçilen AI servisine analiz için gönderilir. Profil adı gönderilmez. E-posta ve telefon ifadeleri varsayılan olarak maskelenir. Ebeveyn ayrıca her profil için ad, öğretmen veya okul adı gibi özel ifadeler tanımlayabilir; bunların metindeki eşleşmeleri de çağrıdan önce maskelenir. API anahtarı tarayıcıya veya veritabanına yazılmaz.

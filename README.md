@@ -1,6 +1,8 @@
 # Eğitim Pusulası
 
-K12 duyuru ve mesajlarını yerel olarak saklayan, özetleyen ve yapılacak iş/tarih çıkaran ebeveyn kontrollü prototip.
+K12 duyuru ve mesajlarını yerel olarak saklayan, özetleyen ve yapılacak iş/tarih çıkaran ebeveyn kontrollü uygulama.
+
+Bu bağımsız ve açık kaynak bir topluluk projesidir; K12 veya okulunuzla resmî bağlantısı yoktur ve okulun resmî kayıtlarının yerine geçmez.
 
 ## Çalıştırma
 
@@ -76,6 +78,7 @@ Anahtarsız kullanım yalnızca `127.0.0.1`, `localhost` veya `::1` adreslerinde
 ## Mevcut kapsam
 
 - Manuel duyuru/mesaj içe aktarma
+- Parola veya oturum bilgisi taşımayan K12 bildirim JSON dosyasını seçili çocuk profiline aktarma
 - Yerel SQLite kayıt
 - Kaynağı koruyan özet kartları
 - Kategori, öncelik, tarih ve yapılacak iş çıkarma
@@ -92,7 +95,7 @@ Anahtarsız kullanım yalnızca `127.0.0.1`, `localhost` veya `::1` adreslerinde
 - En fazla beş yerel kaynak seçen, açık onaylı ve kaynak kimlikli AI soru-cevap
 - Yerel veri ve takma ad seçeneklerini açıklayan ilk kurulum ekranı
 
-K12 otomatik bağlayıcısı, oturum açılmış ağ çağrıları doğrulandıktan sonra eklenecektir. Uygulama K12 parolasını saklamaz.
+K12'ye doğrudan bağlanan otomatik ağ bağlayıcısı, kullanıcı oturumundaki salt-okunur çağrılar çalışma zamanında doğrulanana kadar kapalıdır. Uygulama K12 parolasını saklamaz. Uyumlu bildirim dışa aktarımları arayüzden alınabilir; uygulama içi `intent`, `portal` ve `query` yönlendirme alanları saklanmaz.
 
 Bağlayıcıların veri ve güvenlik sözleşmesi için [docs/CONNECTORS.md](docs/CONNECTORS.md) belgesine bakın.
 
