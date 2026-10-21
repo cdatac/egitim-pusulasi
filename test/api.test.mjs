@@ -358,6 +358,7 @@ test("K12 bağlayıcı sözleşmesi kayıtları içe aktarır, tekrarları ayık
   assert.equal(connectors[0].id, "k12");
   assert.equal(connectors[0].mode, "read-only");
   assert.equal(connectors[0].networkImplementationAvailable, false);
+  assert.equal(connectors[0].notificationImportAvailable, true);
 
   const fixture = JSON.parse(await readFile(path.join(root, "test", "fixtures", "k12-safe-sample.json"), "utf8"));
   assert.match(fixture.description, /Tamamen sentetik/);
@@ -389,6 +390,23 @@ test("K12 bağlayıcı sözleşmesi kayıtları içe aktarır, tekrarları ayık
   });
   assert.equal(rejected.status, 400);
   assert.match((await rejected.json()).error, /kimlik bilgisi/);
+
+  const notification = await fetch(`${app.base}/api/connectors/k12/notifications/import`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ records: [{
+      title: "Sentetik sınav duyurusu",
+      message: "Sınav 30 Ekim Cuma günü yapılacaktır.",
+      receivedAt: "2026-10-21T12:00:00+03:00",
+      intent: "saklanmamalı",
+      portal: "saklanmamalı",
+      query: "saklanmamalı"
+    }] })
+  }).then(response => response.json());
+  assert.equal(notification.input, "notification-export");
+  assert.equal(notification.imported, 1);
+  assert.equal(notification.items[0].body, "Sınav 30 Ekim Cuma günü yapılacaktır.");
+  assert.doesNotMatch(JSON.stringify(notification.items[0]), /saklanmamalı/);
 });
 
 test("birden fazla çocuk profilini birbirinden ayırır", async t => {

@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import { analyzeMessage, cloudAiPreview, isAiConfigured } from "./lib/analyze.mjs";
 import { inspectAiConfiguration } from "./lib/ai-config.mjs";
-import { ConnectorValidationError, connectorDescriptors, normalizeConnectorItems } from "./lib/connectors/contract.mjs";
+import { ConnectorValidationError, connectorDescriptors, normalizeConnectorItems, normalizeK12NotificationItems } from "./lib/connectors/contract.mjs";
 import { buildDigest, DigestValidationError } from "./lib/digest.mjs";
 import { buildCalendar } from "./lib/calendar.mjs";
 import { answerQuestion, buildQuestionPreview, QaValidationError } from "./lib/qa.mjs";
@@ -401,6 +401,18 @@ async function api(req, res, url) {
     const items = Array.isArray(payload.items) ? payload.items : [payload];
     const ids = await importItems(items);
     return json(res, 201, { imported: ids.length, items: ids.map(getMessage) });
+  }
+  if (req.method === "POST" && url.pathname === "/api/connectors/k12/notifications/import") {
+    try {
+      const payload = await bodyJson(req);
+      const items = normalizeK12NotificationItems(payload.records);
+      const profileId = resolveProfileId(payload.profileId);
+      const ids = await importItems(items, profileId);
+      return json(res, 201, { connector: "k12", input: "notification-export", imported: ids.length, items: ids.map(getMessage) });
+    } catch (error) {
+      if (error instanceof ConnectorValidationError) return json(res, 400, { error: error.message });
+      throw error;
+    }
   }
   const connectorImportMatch = url.pathname.match(/^\/api\/connectors\/([a-z0-9-]+)\/import$/);
   if (req.method === "POST" && connectorImportMatch) {

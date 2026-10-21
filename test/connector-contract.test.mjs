@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { ConnectorValidationError, normalizeConnectorItems } from "../lib/connectors/contract.mjs";
+import { ConnectorValidationError, normalizeConnectorItems, normalizeK12NotificationItems } from "../lib/connectors/contract.mjs";
 
 test("K12 kayıtlarını salt okunur ortak biçime dönüştürür", () => {
   const [item] = normalizeConnectorItems("k12", [{
@@ -35,4 +35,28 @@ test("kimlik bilgisi alanlarını içe aktarma sınırında reddeder", () => {
 
 test("bilinmeyen bağlayıcıyı reddeder", () => {
   assert.throws(() => normalizeConnectorItems("bilinmeyen", []), /Bilinmeyen bağlayıcı/);
+});
+
+test("K12 bildirim dışa aktarımını yönlendirme alanlarını saklamadan dönüştürür", () => {
+  const [item] = normalizeK12NotificationItems([{
+    title: "Proje hatırlatması",
+    message: "Fen projesi cuma günü teslim edilecektir.",
+    body: "yedek gövde",
+    receivedAt: "2026-10-21T12:30:00+03:00",
+    intent: "uygulama-içi-eylem",
+    portal: "veli-portalı",
+    query: "özel-yönlendirme"
+  }]);
+
+  assert.equal(item.title, "Proje hatırlatması");
+  assert.equal(item.body, "Fen projesi cuma günü teslim edilecektir.");
+  assert.equal(item.occurredAt, "2026-10-21T12:30:00+03:00");
+  assert.doesNotMatch(JSON.stringify(item), /uygulama-içi-eylem|veli-portalı|özel-yönlendirme/);
+});
+
+test("K12 bildirim dışa aktarımında sır alanlarını reddeder", () => {
+  assert.throws(
+    () => normalizeK12NotificationItems([{ title: "x", message: "y", metadata: { sessionId: "gizli" } }]),
+    error => error instanceof ConnectorValidationError && /kimlik bilgisi/.test(error.message)
+  );
 });
