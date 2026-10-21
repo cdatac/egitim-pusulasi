@@ -189,3 +189,37 @@ test("bulut AI yapılandırılsa bile yalnızca ileti başına onaylı çağrıd
   assert.doesNotMatch(receivedInput, /ogretmen@example\.com|0532 123 45 67/);
   assert.match(receivedInput, /E-POSTA MASKELENDİ|TELEFON MASKELENDİ/);
 });
+
+test("K12 bağlayıcı sözleşmesi kayıtları içe aktarır, tekrarları ayıklar ve sırları reddeder", async t => {
+  const app = await startServer();
+  t.after(() => app.close());
+
+  const connectors = await fetch(`${app.base}/api/connectors`).then(response => response.json());
+  assert.equal(connectors[0].id, "k12");
+  assert.equal(connectors[0].mode, "read-only");
+  assert.equal(connectors[0].networkImplementationAvailable, false);
+
+  const record = { kind: "announcement", title: "Duyuru", body: "Cuma günü etkinlik var.", occurredAt: "2026-10-23" };
+  const first = await fetch(`${app.base}/api/connectors/k12/import`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ records: [record] })
+  }).then(response => response.json());
+  assert.equal(first.imported, 1);
+  assert.equal(first.items[0].source, "connector:k12");
+
+  const duplicate = await fetch(`${app.base}/api/connectors/k12/import`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ records: [record] })
+  }).then(response => response.json());
+  assert.equal(duplicate.imported, 0);
+
+  const rejected = await fetch(`${app.base}/api/connectors/k12/import`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ records: [{ title: "x", body: "y", password: "asla-kabul-etme" }] })
+  });
+  assert.equal(rejected.status, 400);
+  assert.match((await rejected.json()).error, /kimlik bilgisi/);
+});

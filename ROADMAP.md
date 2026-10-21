@@ -29,6 +29,8 @@
 
 ### 1. K12 salt okunur bağlayıcı
 
+- [x] Kimlik bilgilerini reddeden ortak bağlayıcı sözleşmesi
+- [x] Kararlı ileti kimliği ve tekrar ayıklama katmanı
 - [ ] Duyuru ve mesaj isteklerini yetkili kullanıcı oturumunda doğrulama
 - [ ] Oturum bilgilerinin bellekte veya işletim sistemi kasasında tutulması
 - [ ] Tekrarlı iletileri güvenilir biçimde ayıklama

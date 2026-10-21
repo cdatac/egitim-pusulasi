@@ -51,3 +51,5 @@ API anahtarı veritabanına veya tarayıcıya yazılmaz. AI servisi etkin olsa b
 - İsteğe bağlı AI servis bağlantısı
 
 K12 otomatik bağlayıcısı, oturum açılmış ağ çağrıları doğrulandıktan sonra eklenecektir. Uygulama K12 parolasını saklamaz.
+
+Bağlayıcıların veri ve güvenlik sözleşmesi için [docs/CONNECTORS.md](docs/CONNECTORS.md) belgesine bakın.

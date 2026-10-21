@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import { analyzeMessage, cloudAiPreview, isCloudAiConfigured } from "./lib/analyze.mjs";
+import { ConnectorValidationError, connectorDescriptors, normalizeConnectorItems } from "./lib/connectors/contract.mjs";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(ROOT, "data");
@@ -115,6 +116,22 @@ async function runAnalysis(id, mode = "local") {
   return getMessage(id);
 }
 
+async function importItems(items) {
+  const insert = db.prepare(`INSERT OR IGNORE INTO messages(source, external_id, kind, title, body, sender, occurred_at, source_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+  const ids = [];
+  for (const item of items.slice(0, 250)) {
+    const title = String(item.title ?? "Başlıksız").trim().slice(0, 400);
+    const body = String(item.body ?? "").trim().slice(0, 40_000);
+    if (!body) continue;
+    const result = insert.run(String(item.source ?? "manual"), item.externalId ? String(item.externalId) : null,
+      String(item.kind ?? "message"), title, body, item.sender ? String(item.sender) : null,
+      item.occurredAt ? String(item.occurredAt) : null, item.sourceUrl ? String(item.sourceUrl) : null);
+    if (result.changes > 0) ids.push(Number(result.lastInsertRowid));
+  }
+  for (const id of ids) await runAnalysis(id);
+  return ids;
+}
+
 async function api(req, res, url) {
   if (req.method === "GET" && url.pathname === "/api/health") {
     return json(res, 200, { ok: true, aiConfigured: isCloudAiConfigured(), cloudRequiresPerMessageConsent: true });
@@ -125,6 +142,9 @@ async function api(req, res, url) {
       ? db.prepare(`${selectSql} WHERE m.title LIKE ? OR m.body LIKE ? ORDER BY COALESCE(m.occurred_at, m.created_at) DESC`).all(`%${query}%`, `%${query}%`)
       : db.prepare(`${selectSql} ORDER BY COALESCE(m.occurred_at, m.created_at) DESC`).all();
     return json(res, 200, rows.map(rowToMessage));
+  }
+  if (req.method === "GET" && url.pathname === "/api/connectors") {
+    return json(res, 200, connectorDescriptors);
   }
   if (req.method === "GET" && url.pathname === "/api/export") {
     const items = db.prepare(`${selectSql} ORDER BY COALESCE(m.occurred_at, m.created_at) DESC`).all().map(rowToMessage);
@@ -138,19 +158,20 @@ async function api(req, res, url) {
   if (req.method === "POST" && url.pathname === "/api/messages") {
     const payload = await bodyJson(req);
     const items = Array.isArray(payload.items) ? payload.items : [payload];
-    const insert = db.prepare(`INSERT OR IGNORE INTO messages(source, external_id, kind, title, body, sender, occurred_at, source_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
-    const ids = [];
-    for (const item of items.slice(0, 250)) {
-      const title = String(item.title ?? "Başlıksız").trim().slice(0, 400);
-      const body = String(item.body ?? "").trim().slice(0, 40_000);
-      if (!body) continue;
-      const result = insert.run(String(item.source ?? "manual"), item.externalId ? String(item.externalId) : null,
-        String(item.kind ?? "message"), title, body, item.sender ? String(item.sender) : null,
-        item.occurredAt ? String(item.occurredAt) : null, item.sourceUrl ? String(item.sourceUrl) : null);
-      if (result.changes > 0) ids.push(Number(result.lastInsertRowid));
-    }
-    for (const id of ids) await runAnalysis(id);
+    const ids = await importItems(items);
     return json(res, 201, { imported: ids.length, items: ids.map(getMessage) });
+  }
+  const connectorImportMatch = url.pathname.match(/^\/api\/connectors\/([a-z0-9-]+)\/import$/);
+  if (req.method === "POST" && connectorImportMatch) {
+    try {
+      const payload = await bodyJson(req);
+      const items = normalizeConnectorItems(connectorImportMatch[1], payload.records);
+      const ids = await importItems(items);
+      return json(res, 201, { connector: connectorImportMatch[1], imported: ids.length, items: ids.map(getMessage) });
+    } catch (error) {
+      if (error instanceof ConnectorValidationError) return json(res, 400, { error: error.message });
+      throw error;
+    }
   }
   const analyzeMatch = url.pathname.match(/^\/api\/messages\/(\d+)\/analyze$/);
   if (req.method === "POST" && analyzeMatch) {

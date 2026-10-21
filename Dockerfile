@@ -13,6 +13,7 @@ COPY server.mjs ./
 COPY lib ./lib
 COPY public ./public
 COPY scripts ./scripts
+COPY docs ./docs
 
 RUN mkdir -p /data && chown -R node:node /app /data
 USER node
