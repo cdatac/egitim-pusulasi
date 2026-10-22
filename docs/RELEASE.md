@@ -18,7 +18,7 @@ npm ci --ignore-scripts
 npm run check
 npm test
 npm run audit:release
-npm run release:verify -- v0.1.0
+npm run release:verify -- v0.2.0
 ```
 
 Son komut ancak etiket `package.json` sürümüyle eşleşirse, lisans ve zorunlu topluluk/güvenlik belgeleri varsa ve örnek GitHub güvenlik bağlantıları gerçek depo bilgileriyle değiştirilmişse başarılı olur. Hassas veri denetimi çalışma ağacını ve tüm Git geçmişini tarar.

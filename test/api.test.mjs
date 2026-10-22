@@ -357,7 +357,8 @@ test("K12 bağlayıcı sözleşmesi kayıtları içe aktarır, tekrarları ayık
   const connectors = await fetch(`${app.base}/api/connectors`).then(response => response.json());
   assert.equal(connectors[0].id, "k12");
   assert.equal(connectors[0].mode, "read-only");
-  assert.equal(connectors[0].networkImplementationAvailable, false);
+  assert.equal(connectors[0].networkImplementationAvailable, true);
+  assert.equal(connectors[0].status, "runtime-verified");
   assert.equal(connectors[0].notificationImportAvailable, true);
 
   const fixture = JSON.parse(await readFile(path.join(root, "test", "fixtures", "k12-safe-sample.json"), "utf8"));

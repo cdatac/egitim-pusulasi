@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const APP_FILES = [
   ".env.example",
+  "CHANGELOG.md",
   "README.md",
   "PRIVACY.md",
   "SECURITY.md",
@@ -18,7 +19,8 @@ const APP_FILES = [
   "docs/INSTALL.md",
   "docs/USER_GUIDE.md",
   "scripts/doctor.mjs",
-  "scripts/launch.mjs"
+  "scripts/launch.mjs",
+  "scripts/open-k12-browser.mjs"
 ];
 
 function sha256(buffer) {
@@ -41,6 +43,27 @@ function launcher(platform) {
     "set -eu",
     "ROOT=$(CDPATH= cd -- \"$(dirname -- \"$0\")\" && pwd)",
     "exec \"$ROOT/runtime/node\" \"$ROOT/app/scripts/launch.mjs\" \"$@\"",
+    ""
+  ].join("\n");
+}
+
+function k12Launcher(platform) {
+  if (platform === "win32") {
+    return [
+      "@echo off",
+      "setlocal",
+      "set \"ROOT=%~dp0\"",
+      "\"%ROOT%runtime\\node.exe\" \"%ROOT%app\\scripts\\open-k12-browser.mjs\"",
+      "if errorlevel 1 pause",
+      "endlocal",
+      ""
+    ].join("\r\n");
+  }
+  return [
+    "#!/bin/sh",
+    "set -eu",
+    "ROOT=$(CDPATH= cd -- \"$(dirname -- \"$0\")\" && pwd)",
+    "exec \"$ROOT/runtime/node\" \"$ROOT/app/scripts/open-k12-browser.mjs\" \"$@\"",
     ""
   ].join("\n");
 }
@@ -86,6 +109,10 @@ export async function buildPortable({
   const launcherPath = path.join(output, launcherName);
   await writeFile(launcherPath, launcher(platform), "utf8");
   if (platform !== "win32") await chmod(launcherPath, 0o755);
+  const k12LauncherName = platform === "win32" ? "K12-Baglantisini-Ac.cmd" : "k12-baglantisini-ac";
+  const k12LauncherPath = path.join(output, k12LauncherName);
+  await writeFile(k12LauncherPath, k12Launcher(platform), "utf8");
+  if (platform !== "win32") await chmod(k12LauncherPath, 0o755);
 
   if (existsSync(path.join(root, "LICENSE"))) await copyFile(path.join(root, "LICENSE"), path.join(output, "LICENSE"));
   const packageJson = JSON.parse(await readFile(path.join(root, "package.json"), "utf8"));

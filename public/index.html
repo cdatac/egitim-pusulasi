@@ -39,14 +39,11 @@
     </header>
 
     <main id="main-content">
-      <section class="profile-bar" aria-label="Çocuk profili">
+      <section class="profile-switcher" aria-label="Etkin çocuk profili">
         <label for="profile-select">Çocuk profili</label>
         <select id="profile-select"></select>
-        <button id="add-profile" class="ghost">Profil ekle</button>
-        <button id="rename-profile" class="ghost">Adı değiştir</button>
-        <button id="delete-profile" class="danger">Profili sil</button>
-        <button id="redactions" class="ghost">AI maskeleme listesi</button>
-        <span>Profil adı yalnızca bu cihazda tutulur ve AI servisine gönderilmez.</span>
+        <button class="ghost open-view" type="button" data-view="settings">Profil ayarları</button>
+        <span>Veriler yalnızca bu bilgisayarda.</span>
       </section>
 
       <section class="stats" aria-label="Özet">
@@ -55,7 +52,40 @@
         <article><span id="tasks">0</span><small>açık görev</small></article>
       </section>
 
-      <section class="panel digest" aria-labelledby="digest-title">
+      <section class="sync-bar" aria-labelledby="k12-sync-title">
+        <div>
+          <p class="eyebrow">K12 BAĞLANTISI</p>
+          <h2 id="k12-sync-title">Okul verilerini güncelle</h2>
+          <p id="k12-sync-help">Açık K12 veli oturumundaki mesaj ve duyurular salt okunur alınır. Parola ve çerez kaydedilmez.</p>
+        </div>
+        <div class="sync-actions">
+          <button id="k12-sync" type="button" disabled>K12'den eşitle</button>
+          <button id="k12-status-refresh" class="ghost" type="button">Bağlantıyı kontrol et</button>
+          <span id="k12-sync-status" role="status" aria-live="polite">K12 bağlantısı kontrol edilmedi.</span>
+        </div>
+      </section>
+
+      <nav class="main-tabs" aria-label="Ana bölümler">
+        <button class="tab-button active" type="button" data-view="today" aria-selected="true">Bugün</button>
+        <button class="tab-button" type="button" data-view="week" aria-selected="false">Haftam</button>
+        <button class="tab-button" type="button" data-view="messages" aria-selected="false">İletiler</button>
+        <button class="tab-button" type="button" data-view="assistant" aria-selected="false">Asistan</button>
+        <button class="tab-button" type="button" data-view="settings" aria-selected="false">Ayarlar</button>
+      </nav>
+
+      <section class="profile-bar view-section" data-view-section="settings" aria-label="Çocuk profili ayarları" hidden>
+        <div>
+          <p class="eyebrow">ÇOCUK PROFİLİ</p>
+          <h2>Profil ayarları</h2>
+          <p>Profil adı yalnızca bu cihazda tutulur ve AI servisine gönderilmez.</p>
+        </div>
+        <button id="add-profile" class="ghost">Profil ekle</button>
+        <button id="rename-profile" class="ghost">Adı değiştir</button>
+        <button id="delete-profile" class="danger">Profili sil</button>
+        <button id="redactions" class="ghost">AI maskeleme listesi</button>
+      </section>
+
+      <section class="panel digest view-section" data-view-section="today" aria-labelledby="digest-title">
         <div class="digest-head">
           <div>
             <p class="eyebrow">KAYNAKLI TAKİP ÖZETİ</p>
@@ -70,7 +100,23 @@
         <div id="digest-content" aria-live="polite"></div>
       </section>
 
-      <section class="panel qa" aria-labelledby="qa-title">
+      <section class="panel weekly-learning view-section" data-view-section="week" aria-labelledby="weekly-learning-title" hidden>
+        <div class="digest-head">
+          <div>
+            <p class="eyebrow">HAFTALIK ÖĞRENME VE ÖDEV TAKİBİ</p>
+            <h2 id="weekly-learning-title">Kazanım haritası</h2>
+            <p>Okulun konu/kazanım iletileri, ödevler ve etkinlikler kaynaklarına bağlı olarak birleştirilir.</p>
+          </div>
+          <div class="weekly-controls">
+            <label for="weekly-anchor">Haftası</label>
+            <input id="weekly-anchor" type="date">
+            <button id="weekly-calendar" class="ghost" type="button">Haftalık planı indir</button>
+          </div>
+        </div>
+        <div id="weekly-learning-content" aria-live="polite"></div>
+      </section>
+
+      <section class="panel qa view-section" data-view-section="assistant" aria-labelledby="qa-title" hidden>
         <div>
           <p class="eyebrow">KAYNAKLI SORU-CEVAP</p>
           <h2 id="qa-title">Okul iletilerine soru sor</h2>
@@ -84,7 +130,7 @@
         <div id="qa-result" role="status" aria-live="polite"></div>
       </section>
 
-      <section class="panel composer">
+      <section class="panel composer view-section" data-view-section="settings" hidden>
         <div>
           <p class="eyebrow">HIZLI İÇE AKTAR</p>
           <h2>Duyuru veya mesaj ekle</h2>
@@ -102,7 +148,7 @@
         </div>
       </section>
 
-      <section class="toolbar">
+      <section class="toolbar view-section" data-view-section="messages" hidden>
         <div>
           <p class="eyebrow">GÜNLÜK AKIŞ</p>
           <h2>Mesajlar ve yapılacaklar</h2>
@@ -115,7 +161,7 @@
           <button id="clear" class="danger">Bu profilin iletilerini temizle</button>
         </div>
       </section>
-      <section id="feed" class="feed" aria-live="polite"></section>
+      <section id="feed" class="feed view-section" data-view-section="messages" aria-live="polite" hidden></section>
     </main>
   </div>
   <template id="empty-template">

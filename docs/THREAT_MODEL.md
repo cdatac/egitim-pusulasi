@@ -38,7 +38,8 @@ Tarayıcı ile yerel API aynı `127.0.0.1` kökenindedir. Bağlayıcı sınırı
 | AI yanıtının ilgisiz veya uydurma kaynağa atıf yapması | Dönen kimlikleri yalnızca gerçekten gönderilen en fazla beş iletiyle sınırlandırma ve kaynak karta geri bağlantı | Kaynağın doğru yorumlandığını ebeveyn yine doğrulamalıdır |
 | Gereksiz kişisel bilginin buluta gitmesi | E-posta/telefon maskeleme, profil adını göndermeme, profil bazlı kullanıcı maskeleme listesi | Kullanıcının listeye eklemediği dolaylı tanımlayıcılar otomatik tanınmayabilir |
 | Profiller arası veri karışması | Sorgu, pano, içe aktarma ve silmede profil kimliği doğrulaması; API testleri | Bilgisayar hesabını paylaşan kişiler aynı yerel uygulamaya erişebilir |
-| Bağlayıcının okul sisteminde değişiklik yapması | Salt okunur sözleşme ve ürün ilkesi | Gerçek uç noktalar doğrulanana kadar K12 ağ bağlayıcısı etkin değildir |
+| Bağlayıcının okul sisteminde değişiklik yapması | Yalnızca doğrulanmış gelen kutusu ve ileti-gövdesi okuma uç noktaları; her eşitlemede açık onay | Yeni K12 modülleri salt okunur davranışları ayrı ayrı doğrulanmadan etkinleştirilmez |
+| Chrome hata ayıklama bağlantı noktasına başka bir süreç erişmesi | Yalnızca loopback `127.0.0.1:9222`, ayrılmış profil önerisi ve yalnızca HTTPS `*.k12net.com` hedef kabulü | Aynı bilgisayardaki kötü amaçlı süreçlere karşı işletim sistemi güvenliği gerekir |
 | Uydurma AI özeti veya yanlış tarih | Kaynak ileti her analizle birlikte korunur, yerel çıkarım testleri | AI çıktısı ebeveyn doğrulaması olmadan kesin bilgi sayılmamalıdır |
 | Yerel veritabanının başka kullanıcıca okunması | Varsayılan localhost erişimi ve işletim sistemi dosya izinleri | Uygulama düzeyinde şifreleme henüz yoktur |
 | Bağımlılık tedarik zinciri saldırısı | Çalışma zamanı npm bağımlılığı yok, CI sabit ana Node sürümünü test eder | GitHub Actions sürümleri etiketle sabittir, commit SHA ile sabitlenmemiştir |
@@ -52,7 +53,7 @@ Tarayıcı ile yerel API aynı `127.0.0.1` kökenindedir. Bağlayıcı sınırı
 
 ## Yayından önce açık konular
 
-- K12 çalışma zamanı çağrılarının kullanıcı oturumunda salt okunur olduğunun doğrulanması
+- Not, devamsızlık, ödev, sınav ve diğer K12 modüllerinin salt okunur çağrılarının ayrı ayrı doğrulanması
 - Oturum sırları gerekiyorsa işletim sistemi kasası veya yalnızca bellek yaklaşımının uygulanması
 - Yerel veritabanı şifrelemesi ve yedekleme tehditlerinin değerlendirilmesi
 - Seçilecek AI sağlayıcıları için veri saklama ve eğitim koşullarının belgelenmesi

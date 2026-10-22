@@ -33,10 +33,10 @@
 
 - [x] Kimlik bilgilerini reddeden ortak bağlayıcı sözleşmesi
 - [x] Kararlı ileti kimliği ve tekrar ayıklama katmanı
-- [ ] Duyuru ve mesaj isteklerini yetkili kullanıcı oturumunda doğrulama
-- [ ] Oturum bilgilerinin bellekte veya işletim sistemi kasasında tutulması
+- [x] Duyuru ve mesaj isteklerini yetkili kullanıcı oturumunda doğrulama
+- [x] Oturum bilgisini uygulamaya kopyalamadan ayrılmış tarayıcı oturumunda kullanma
 - [x] Tekrarlı iletileri güvenilir biçimde ayıklama
-- [ ] Yenileme, hata ve oturum süresi dolma davranışları
+- [x] Yenileme, bağlantı hatası ve oturum süresi dolma davranışları
 - [x] Gerçek veri içermeyen kayıtlı test örnekleri
 
 ### 2. Ebeveyn asistanı
@@ -72,7 +72,7 @@
 - [x] Otomatik test/kalite iş akışı
 - [x] Lisans ve sürüm eşleşmesini zorlayan arşiv/checksum yayın iş akışı
 - [x] Gizlilik uyarılı issue ve pull request şablonları
-- [ ] Herkese açık GitHub deposu ve ilk sürüm
+- [x] Herkese açık GitHub deposu ve ilk sürüm
 
 ## Yayın kapıları
 

@@ -8,9 +8,11 @@ import { DatabaseSync } from "node:sqlite";
 import { analyzeMessage, cloudAiPreview, isAiConfigured } from "./lib/analyze.mjs";
 import { inspectAiConfiguration } from "./lib/ai-config.mjs";
 import { ConnectorValidationError, connectorDescriptors, normalizeConnectorItems, normalizeK12NotificationItems } from "./lib/connectors/contract.mjs";
+import { inspectK12Browser, K12ConnectorError, syncK12Messages } from "./lib/connectors/k12-cdp.mjs";
 import { buildDigest, DigestValidationError } from "./lib/digest.mjs";
-import { buildCalendar } from "./lib/calendar.mjs";
+import { buildCalendar, buildPlannerCalendar } from "./lib/calendar.mjs";
 import { answerQuestion, buildQuestionPreview, QaValidationError } from "./lib/qa.mjs";
+import { buildWeeklyLearningMap, WeeklyLearningValidationError } from "./lib/weekly-learning.mjs";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(ROOT, "data");
@@ -353,6 +355,39 @@ async function api(req, res, url) {
   if (req.method === "GET" && url.pathname === "/api/connectors") {
     return json(res, 200, connectorDescriptors);
   }
+  if (req.method === "GET" && url.pathname === "/api/connectors/k12/status") {
+    try {
+      const status = await inspectK12Browser();
+      return json(res, 200, { connector: "k12", ...status, target: undefined });
+    } catch (error) {
+      if (error instanceof K12ConnectorError) return json(res, 200, { connector: "k12", available: false, loggedIn: false, error: error.message, code: error.code });
+      throw error;
+    }
+  }
+  if (req.method === "POST" && url.pathname === "/api/connectors/k12/sync") {
+    try {
+      const payload = await bodyJson(req);
+      if (payload.consent !== true) return json(res, 400, { error: "K12 eşitlemesi için bu işlemde açık kullanıcı onayı gerekir." });
+      const profileId = resolveProfileId(payload.profileId);
+      const sync = await syncK12Messages();
+      const items = normalizeConnectorItems("k12", sync.records);
+      const ids = await importItems(items, profileId);
+      return json(res, 200, {
+        connector: "k12",
+        mode: "local-browser-session",
+        scanned: sync.records.length,
+        imported: ids.length,
+        unchanged: sync.records.length - ids.length,
+        detailResponses: sync.detailResponses,
+        items: ids.map(getMessage)
+      });
+    } catch (error) {
+      if (error instanceof K12ConnectorError || error instanceof ConnectorValidationError) {
+        return json(res, error.code === "k12_login_required" ? 401 : 400, { error: error.message, code: error.code });
+      }
+      throw error;
+    }
+  }
   if (req.method === "POST" && url.pathname === "/api/qa/preview") {
     const payload = await bodyJson(req);
     const profileId = resolveProfileId(payload.profileId);
@@ -496,6 +531,43 @@ async function api(req, res, url) {
     const anchor = url.searchParams.get("anchor") || new Date();
     const messages = db.prepare(`${selectSql} WHERE m.profile_id = ? ORDER BY COALESCE(m.occurred_at, m.created_at) DESC`).all(profileId).map(rowToMessage);
     return json(res, 200, buildDigest(messages, { period, anchor }));
+  }
+  if (req.method === "GET" && url.pathname === "/api/weekly-learning") {
+    try {
+      const profileId = resolveProfileId(url.searchParams.get("profileId"));
+      const anchor = url.searchParams.get("anchor") || new Date();
+      const messages = db.prepare(`${selectSql} WHERE m.profile_id = ? ORDER BY COALESCE(m.occurred_at, m.created_at) DESC`).all(profileId).map(rowToMessage);
+      return json(res, 200, buildWeeklyLearningMap(messages, { anchor }));
+    } catch (error) {
+      if (error instanceof WeeklyLearningValidationError) return json(res, 400, { error: error.message });
+      throw error;
+    }
+  }
+  if (req.method === "GET" && url.pathname === "/api/weekly-learning.ics") {
+    try {
+      const profileId = resolveProfileId(url.searchParams.get("profileId"));
+      const profile = db.prepare("SELECT name FROM profiles WHERE id = ?").get(profileId);
+      const anchor = url.searchParams.get("anchor") || new Date();
+      const messages = db.prepare(`${selectSql} WHERE m.profile_id = ? ORDER BY COALESCE(m.occurred_at, m.created_at) DESC`).all(profileId).map(rowToMessage);
+      const weekly = buildWeeklyLearningMap(messages, { anchor });
+      const included = messages.filter(message => weekly.sourceMessageIds.includes(message.id));
+      const calendar = buildPlannerCalendar(included, { calendarName: `Eğitim Pusulası · ${profile.name} · ${weekly.label}` });
+      res.writeHead(200, {
+        "content-type": "text/calendar; charset=utf-8",
+        "content-disposition": `attachment; filename=egitim-pusulasi-haftalik-${weekly.range.from}.ics`,
+        "content-length": Buffer.byteLength(calendar.content),
+        "cache-control": "no-store",
+        "x-content-type-options": "nosniff",
+        "x-calendar-events": String(calendar.eventCount),
+        "x-calendar-tasks": String(calendar.taskCount),
+        "x-calendar-omitted-dates": String(calendar.omittedDateCount)
+      });
+      res.end(calendar.content);
+      return true;
+    } catch (error) {
+      if (error instanceof WeeklyLearningValidationError) return json(res, 400, { error: error.message });
+      throw error;
+    }
   }
   if (req.method === "GET" && url.pathname === "/api/calendar.ics") {
     const profileId = resolveProfileId(url.searchParams.get("profileId"));

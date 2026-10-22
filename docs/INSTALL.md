@@ -23,6 +23,8 @@ Oluşturucu mevcut bir çıktı dizininin üzerine yazmaz; `data/`, Git geçmiş
 
 Windows bilinmeyen bir `.cmd` dosyası için uyarı gösterebilir. Dosya düz metindir; çalıştırmadan önce içeriği bir metin düzenleyicisinde inceleyebilirsiniz. Proje PowerShell çalıştırma politikasını değiştirmez.
 
+K12 eşitlemesi için ayrıca `K12-Baglantisini-Ac.cmd` dosyasına çift tıklayın. Bu başlatıcı Google Chrome'u yalnızca localhost üzerinden denetlenebilen, uygulamaya ayrılmış ayrı bir profille açar. Veli girişi bu pencerede yapılır; uygulama parolayı almaz. Ayrıntılar [kullanım kılavuzundadır](USER_GUIDE.md#3-k12-bağlantısı-ve-eşitleme).
+
 ## macOS ve Linux
 
 Terminalde proje klasörüne geçin ve:
@@ -32,6 +34,8 @@ sh start.sh
 ```
 
 Durdurmak için `Ctrl+C` kullanın. Masaüstü ortamında tarayıcı otomatik açılamazsa terminalde gösterilen yerel adresi elle açın.
+
+K12 bağlantı penceresini açmak için ayrı bir terminalde `sh k12-baglantisini-ac.sh` çalıştırın.
 
 ## Docker
 

@@ -35,6 +35,7 @@ test("taşınabilir paket yalnızca uygulama, çalışma zamanı ve lisans dosya
   assert.equal(existsSync(path.join(output, "app", "data")), false);
   assert.equal(existsSync(path.join(output, ".git")), false);
   assert.match(await readFile(path.join(output, "Egitim-Pusulasi-Baslat.cmd"), "utf8"), /runtime\\node\.exe/);
+  assert.match(await readFile(path.join(output, "K12-Baglantisini-Ac.cmd"), "utf8"), /open-k12-browser\.mjs/);
 });
 
 test("var olan çıktı dizininin üzerine yazmaz", async t => {

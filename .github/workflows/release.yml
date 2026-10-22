@@ -22,7 +22,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run check
       - run: npm test
-      - run: sh -n start.sh
+      - run: sh -n start.sh k12-baglantisini-ac.sh
       - run: npm run audit:release
       - run: npm run release:verify -- "$GITHUB_REF_NAME"
       - name: Build tracked-source archives
