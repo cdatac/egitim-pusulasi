@@ -58,7 +58,7 @@ test("haftalık plan tarihli olayları ve yapılacak kontrol listesini birlikte 
       summary: "Kesir çalışma kağıdı",
       dates: [{ value: "25.10.2026" }],
       actionItems: [
-        { key: "a1", text: "Kesir çalışma kağıdını bitir", completed: false },
+        { key: "a1", text: "Kesir çalışma kağıdını 25.10.2026 tarihinde bitir", completed: false },
         { key: "a2", text: "Kitabı oku", completed: true }
       ]
     }
@@ -67,8 +67,19 @@ test("haftalık plan tarihli olayları ve yapılacak kontrol listesini birlikte 
   assert.equal(result.eventCount, 1);
   assert.equal(result.taskCount, 2);
   assert.match(unfolded, /BEGIN:VTODO/);
-  assert.match(unfolded, /SUMMARY:Kesir çalışma kağıdını bitir/);
+  assert.match(unfolded, /SUMMARY:Kesir çalışma kağıdını 25.10.2026 tarihinde bitir/);
   assert.match(unfolded, /DUE;VALUE=DATE:20261025/);
   assert.match(unfolded, /STATUS:NEEDS-ACTION/);
   assert.match(unfolded, /STATUS:COMPLETED/);
+  assert.doesNotMatch(unfolded, /COMPLETED:/);
+});
+
+test("görev metninde açık tarih yoksa ileti tarihini DUE olarak kullanmaz", () => {
+  const result = buildPlannerCalendar([{
+    id: 10,
+    title: "Birden çok görev",
+    body: "Kaynak",
+    analysis: { dates: [{ value: "25.10.2026" }], actionItems: [{ key: "a", text: "Kitabı oku", completed: false }] }
+  }], { generatedAt: "2026-10-23T17:00:00Z" });
+  assert.doesNotMatch(result.content, /DUE;VALUE=DATE/);
 });

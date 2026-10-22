@@ -1,11 +1,20 @@
 # Değişiklik günlüğü
 
+## 0.2.1 — 2026-10-22
+
+- K12 eşitlemesine süre sınırı, eşzamanlı işlem kilidi, yalnızca yeni/eksik ayrıntıları alma ve öğrenci–profil bağlama koruması eklendi.
+- K12 Chrome bağlantısı rastgele yerel port ve pencere kapanınca silinen geçici profille sınırlandırıldı.
+- Türkçe kazanım algılama, ödev eşleştirme, İstanbul saat dilimi ve geçersiz tarih denetimleri sıkılaştırıldı.
+- Takvim çıktısında kaynaksız son tarih ve yanıltıcı tamamlanma zamanı kaldırıldı.
+- Arayüz hata durumları, klavye erişilebilirliği, yerel depolama ve indirme temizliği sağlamlaştırıldı.
+- Yayın iş akışı yalnızca ana dala birleştirilmiş commit'lerin etiketlenmesine izin verecek biçimde kapatıldı.
+
 ## 0.2.0 — 2026-10-22
 
 - Arayüz Bugün, Haftam, İletiler, Asistan ve Ayarlar sekmelerine ayrıldı.
 - K12 mesaj ve duyuruları, ayrılmış Chrome oturumundan açık onayla salt okunur eşitlenebilir.
 - Tek tıklamalı/tek komutlu K12 Chrome bağlantı başlatıcıları eklendi.
-- Cuma iletilerinden ders bazlı haftalık kazanım haritası ve ödev kontrol listesi oluşturulur.
+- Haftanın iletilerinden ders bazlı kazanım haritası ve ödev kontrol listesi oluşturulur.
 - Ödevler haftalık kazanımlarla kaynaklı olarak karşılaştırılır; belirsiz eşleşmeler kontrol için işaretlenir.
 - Haftalık etkinlik ve görevler `VEVENT`/`VTODO` içeren `.ics` takvimine aktarılabilir.
 - K12 içeriğindeki HTML kalıntıları görünümde temizlenir.

@@ -33,17 +33,17 @@ Content-Type: application/json
 
 `profileId`, kaydın hangi çocuk profiline ait olduğunu belirler ve mevcut bir profil olmalıdır. Aynı okul ileti kimliği farklı profillerde bağımsız olarak saklanabilir.
 
-K12 tanımı `read-only` durumundadır. Duyuru ve mesaj çağrıları, kullanıcının kendi veli oturumunda çalışma zamanında doğrulanmıştır. Yerel eşitleme yalnızca `127.0.0.1:9222` adresinde kullanıcı tarafından açılmış Chrome penceresindeki `https://*.k12net.com` sekmesini kabul eder. Parola istenmez; çerez veya erişim belirteci veritabanına yazılmaz.
+K12 tanımı `read-only` durumundadır. Duyuru ve mesaj çağrıları kullanıcının kendi veli oturumunda deneysel olarak doğrulanmıştır. Yerel eşitleme yalnızca başlatıcının rastgele seçtiği `127.0.0.1` portundaki geçici Chrome penceresinde açık `https://*.k12net.com` sekmesini kabul eder. Parola istenmez; çerez veya erişim belirteci veritabanına yazılmaz.
 
 ## Yerel Chrome oturumu ile eşitleme
 
 K12, giriş yapıldıktan sonra mesaj listesini `/SPCore.Web/api/Messages/{enrollmentId}/Inbox`, ileti gövdesini ise `/SPCore.Web/api/Messages/Message/{messageId}` üzerinden okur. Eğitim Pusulası bu çağrıları kullanıcının açık tarayıcı oturumunda gerçekleştirir ve en fazla 250 kaydı ortak biçime dönüştürür.
 
-1. Windows'ta `K12-Baglantisini-Ac.cmd`, macOS/Linux'ta `sh k12-baglantisini-ac.sh` ile yalnızca Eğitim Pusulası için ayrılmış Chrome penceresini açın. Başlatıcı denetim adresini `127.0.0.1:9222` ile sınırlar.
+1. Windows'ta `K12-Baglantisini-Ac.cmd`, macOS'ta `K12-Baglantisini-Ac.command`, Linux'ta `sh k12-baglantisini-ac.sh` ile geçici K12 Chrome penceresini açın. Başlatıcı rastgele bir port seçer ve denetim adresini `127.0.0.1` ile sınırlar.
 2. Bu pencerede kendi K12 veli hesabınıza giriş yapın.
 3. Eğitim Pusulası'nda **Bağlantıyı kontrol et**, ardından **K12'den eşitle** düğmesini kullanın.
 
-Eşitleme K12 sayfasını Mesajlar bölümüne götürür. Mesaj gönderme, silme, okundu işareti değiştirme, not/yoklama değiştirme veya başka bir hesaba erişme çağrısı yapmaz. Her eşitleme için kullanıcıdan ayrıca onay alınır.
+Eşitleme K12 sayfasını Mesajlar bölümüne götürür. Mesaj gönderme, silme, not/yoklama değiştirme veya başka bir hesaba erişme isteği yapmaz. İleti ayrıntısının GET ile açılması K12 tarafından “okundu” sayılabilir. İlk eşitlemede K12 öğrenci kimliği seçili yerel profile bağlanır; sonraki eşitlemelerde uyuşmazlık varsa veri içe aktarılmaz. Her eşitleme için kullanıcıdan ayrıca onay alınır.
 
 Bu ilk ağ bağlayıcısı mesaj ve duyuruları kapsar. Not, devamsızlık, ödev, sınav ve diğer modüller çalışma zamanı kanıtlarıyla tek tek doğrulandıktan sonra aynı salt-okunur sınır içinde eklenecektir.
 

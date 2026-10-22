@@ -47,3 +47,15 @@ test("var olan çıktı dizininin üzerine yazmaz", async t => {
     nodeLicense: import.meta.filename
   }), /zaten var/);
 });
+
+test("macOS paketi çift tıklanabilir K12 command başlatıcısı üretir", async t => {
+  const temporary = await mkdtemp(path.join(tmpdir(), "egitim-pusulasi-portable-macos-"));
+  t.after(() => rm(temporary, { recursive: true, force: true }));
+  const fakeNode = path.join(temporary, "node");
+  const fakeLicense = path.join(temporary, "NODE-LICENSE");
+  const output = path.join(temporary, "package");
+  await writeFile(fakeNode, "sentetik-node", "utf8");
+  await writeFile(fakeLicense, "sentetik-lisans", "utf8");
+  await buildPortable({ outputDirectory: output, nodeBinary: fakeNode, nodeLicense: fakeLicense, platform: "darwin" });
+  assert.equal(existsSync(path.join(output, "K12-Baglantisini-Ac.command")), true);
+});

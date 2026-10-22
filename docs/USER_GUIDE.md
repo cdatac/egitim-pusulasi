@@ -40,9 +40,9 @@ K12 parolası Eğitim Pusulası'na yazılmaz. Giriş, uygulamadan ayrı açılan
 
 ### macOS veya Linux
 
-Proje klasöründe `sh k12-baglantisini-ac.sh` çalıştırın; sonra yukarıdaki 2-5. adımları izleyin.
+macOS'ta `K12-Baglantisini-Ac.command` dosyasına çift tıklayın. Linux'ta proje klasöründe `sh k12-baglantisini-ac.sh` çalıştırın; sonra yukarıdaki 2-5. adımları izleyin.
 
-Bağlantı penceresi ayrı bir Chrome profili kullanır. Parola, çerez ve erişim belirteci Eğitim Pusulası veritabanına kaydedilmez. Eşitleme en fazla 250 mesaj/duyuru okur, daha önce alınanları tekrar eklemez ve K12'ye mesaj göndermez veya kayıt değiştirmez. İlk sürümde otomatik bağlantı yalnızca mesaj ve duyuruları kapsar.
+Başlatıcı penceresini Chrome kapanana kadar açık bırakın. Bağlantı penceresi rastgele bir localhost portu ve geçici gizli Chrome profili kullanır; pencere kapanınca profil silinir. Parolayı Chrome'a kaydetmeyin. Eşitleme en fazla 250 mesaj/duyuru okur, daha önce alınan tam kayıtların ayrıntısını yeniden istemez ve K12'ye yazma isteği göndermez. İleti ayrıntısının açılması K12 tarafından “okundu” sayılabilir. İlk eşitlemede K12'de seçili öğrenci bu yerel profile bağlanır; sonraki uyuşmazlıklar durdurulur. Otomatik bağlantı yalnızca mesaj ve duyuruları kapsar.
 
 K12 pencereniz okulunuza özel bir adrese gitmiyorsa o ayrı Chrome penceresinde okulunuzun verdiği K12 adresini açın. Adres `https://` kullanmalı ve `k12net.com` alanında olmalıdır.
 
@@ -58,7 +58,7 @@ K12 pencereniz okulunuza özel bir adrese gitmiyorsa o ayrı Chrome penceresinde
 
 Uygulama okul iletisinde bulunmayan müfredat kazanımı üretmez. Ödev kutusunu işaretlediğinizde aynı görev diğer ekranlarda da tamamlanmış görünür.
 
-**Haftalık planı indir** düğmesi etkinlikleri takvim olayı (`VEVENT`), ödev ve yapılacakları kontrol edilebilir görev (`VTODO`) olarak tek `.ics` dosyasına aktarır. Dosyayı Google Takvim, Apple Takvim veya Outlook gibi uyumlu bir takvime içe aktarabilirsiniz.
+**Haftalık planı indir** düğmesi etkinlikleri takvim olayı (`VEVENT`), ödev ve yapılacakları kontrol edilebilir görev (`VTODO`) olarak tek `.ics` dosyasına aktarır. Apple Takvim ve bazı görev uygulamaları `VTODO` kayıtlarını destekler; Google Takvim ve bazı Outlook sürümleri görevleri içe aktarmayabilir. Tarihli etkinlikler standart takvim olayı olarak kalır.
 
 ## 5. Çocuk profilleri
 
@@ -107,7 +107,7 @@ Güvenlik sorunu bulursanız gerçek çocuk verisi kullanmadan [güvenlik politi
 ## 11. Sorun giderme
 
 - **Uygulama açılmıyor:** Proje klasöründe `npm run doctor` çalıştırın. Node.js 24 veya üzeri gerekir.
-- **K12 bağlantısı bulunamıyor:** `K12-Baglantisini-Ac.cmd`/`.sh` ile açılan ayrı Chrome penceresinin açık ve veli hesabının giriş yapmış olduğunu kontrol edin. Normal Chrome pencereniz bağlantı için yeterli değildir.
+- **K12 bağlantısı bulunamıyor:** K12 başlatıcısıyla açılan ayrı Chrome ve başlatıcı pencerelerinin açık, veli hesabının giriş yapmış olduğunu kontrol edin. Normal Chrome pencereniz bağlantı için yeterli değildir.
 - **Chrome bulunamadı:** Google Chrome'u kurun. Windows'ta standart kurulum yolları otomatik aranır.
 - **Eşitle düğmesi pasif:** Önce **Bağlantıyı kontrol et** düğmesine basın.
 - **Oturum sona erdi:** Ayrı K12 Chrome penceresinde yeniden giriş yapın ve bağlantıyı tekrar kontrol edin.

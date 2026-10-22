@@ -9,6 +9,18 @@ let activeProfileId = null;
 let currentDigest = null;
 let weeklyLearning = null;
 
+function storageGet(key) {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+
+function storageSet(key, value) {
+  try { localStorage.setItem(key, value); } catch { /* özel tarama veya engelli depolama */ }
+}
+
+function storageRemove(key) {
+  try { localStorage.removeItem(key); } catch { /* özel tarama veya engelli depolama */ }
+}
+
 function esc(value = "") {
   return String(value).replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
 }
@@ -19,11 +31,11 @@ function plain(value = "") {
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
     .replace(/<[^>]*>?/g, " ")
     .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
     .replace(/&lt;/gi, "<")
     .replace(/&gt;/gi, ">")
     .replace(/&quot;/gi, '"')
     .replace(/&#39;/gi, "'")
+    .replace(/&amp;/gi, "&")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -34,14 +46,21 @@ function formatDate(value) {
   return new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(date);
 }
 
-function setView(view) {
+function setView(view, { focus = false } = {}) {
   document.querySelectorAll("[data-view-section]").forEach(section => { section.hidden = section.dataset.viewSection !== view; });
   document.querySelectorAll(".tab-button").forEach(button => {
     const active = button.dataset.view === view;
     button.classList.toggle("active", active);
-    button.setAttribute("aria-selected", String(active));
+    button.setAttribute("aria-pressed", String(active));
   });
-  localStorage.setItem("egitim-pusulasi-view", view);
+  storageSet("egitim-pusulasi-view", view);
+  if (focus) {
+    const heading = document.querySelector(`[data-view-section="${view}"]:not([hidden]) h2`);
+    if (heading) {
+      heading.setAttribute("tabindex", "-1");
+      heading.focus();
+    }
+  }
 }
 
 function render() {
@@ -163,7 +182,7 @@ async function refresh(q = "") {
 
 async function loadProfiles() {
   profiles = await fetch("/api/profiles").then(response => response.json());
-  const saved = Number(localStorage.getItem("egitim-pusulasi-profile"));
+  const saved = Number(storageGet("egitim-pusulasi-profile"));
   activeProfileId = profiles.some(profile => profile.id === saved) ? saved : profiles[0]?.id;
   const select = $("#profile-select");
   select.innerHTML = profiles.map(profile => `<option value="${profile.id}">${esc(profile.name)}</option>`).join("");
@@ -203,7 +222,8 @@ $("#k12-status-refresh").addEventListener("click", refreshK12Status);
 $("#k12-sync").addEventListener("click", async () => {
   const button = $("#k12-sync");
   const statusBox = $("#k12-sync-status");
-  const accepted = confirm("Açık K12 veli oturumundaki en fazla 250 mesaj ve duyuru bu çocuk profiline okunup yalnızca bu bilgisayarda saklanacak. K12'ye mesaj gönderilmeyecek ve hiçbir kayıt değiştirilmeyecek. Devam edilsin mi?");
+  const profileName = profiles.find(profile => profile.id === activeProfileId)?.name ?? "seçili profil";
+  const accepted = confirm(`K12 penceresinde şu anda seçili öğrencinin en fazla 250 mesaj ve duyurusu “${profileName}” profiline bağlanacak. İleti ayrıntılarının açılması K12 tarafından “okundu” olarak değerlendirilebilir. K12'ye mesaj gönderilmeyecek. Doğru öğrenci açık mı ve devam edilsin mi?`);
   if (!accepted) return;
   button.disabled = true;
   statusBox.textContent = "K12 mesaj ve duyuruları okunuyor… Bu işlem biraz sürebilir.";
@@ -211,11 +231,12 @@ $("#k12-sync").addEventListener("click", async () => {
     const response = await fetch("/api/connectors/k12/sync", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ profileId: activeProfileId, consent: true })
+      body: JSON.stringify({ profileId: activeProfileId, consent: true, bindEnrollment: true }),
+      signal: AbortSignal.timeout(65_000)
     });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error ?? "K12 eşitlemesi başarısız oldu.");
-    statusBox.textContent = `${result.scanned} K12 kaydı tarandı; ${result.imported} yeni kayıt eklendi, ${result.unchanged} kayıt zaten vardı.`;
+    statusBox.textContent = `${result.scanned} K12 kaydı tarandı; ${result.imported} yeni kayıt eklendi, ${result.updated ?? 0} eksik kayıt tamamlandı, ${result.unchanged} kayıt zaten vardı.`;
     await refresh();
   } catch (error) {
     statusBox.textContent = error.message;
@@ -273,27 +294,34 @@ $("#search").addEventListener("input", event => {
 
 $("#profile-select").addEventListener("change", async event => {
   activeProfileId = Number(event.target.value);
-  localStorage.setItem("egitim-pusulasi-profile", String(activeProfileId));
+  storageSet("egitim-pusulasi-profile", String(activeProfileId));
   await refresh($("#search").value);
 });
 
 $("#digest-period").addEventListener("change", () => refresh($("#search").value));
 
-document.querySelectorAll(".tab-button,.open-view").forEach(button => button.addEventListener("click", () => setView(button.dataset.view)));
+document.querySelectorAll(".tab-button,.open-view").forEach(button => button.addEventListener("click", () => setView(button.dataset.view, { focus: true })));
 
 $("#weekly-anchor").addEventListener("change", () => refresh($("#search").value));
 
 $("#weekly-learning-content").addEventListener("change", async event => {
   const task = event.target.closest(".weekly-task-toggle");
   if (!task) return;
+  const intended = task.checked;
   task.disabled = true;
-  const response = await fetch(`/api/messages/${task.dataset.messageId}/tasks/${task.dataset.taskKey}`, {
-    method: "PATCH",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ completed: task.checked })
-  });
-  if (!response.ok) alert("Ödev kontrol durumu kaydedilemedi.");
-  await refresh($("#search").value);
+  try {
+    const response = await fetch(`/api/messages/${task.dataset.messageId}/tasks/${task.dataset.taskKey}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ completed: intended })
+    });
+    if (!response.ok) throw new Error("Ödev kontrol durumu kaydedilemedi.");
+    await refresh($("#search").value);
+  } catch (error) {
+    task.checked = !intended;
+    task.disabled = false;
+    alert(error.message);
+  }
 });
 
 $("#weekly-calendar").addEventListener("click", async () => {
@@ -309,7 +337,7 @@ $("#weekly-calendar").addEventListener("click", async () => {
   link.href = url;
   link.download = `egitim-pusulasi-haftalik-${anchor}.ics`;
   link.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 1_000);
 });
 
 $("#digest-content").addEventListener("click", async event => {
@@ -348,7 +376,7 @@ $("#add-profile").addEventListener("click", async () => {
   await loadProfiles();
   activeProfileId = profile.id;
   $("#profile-select").value = String(profile.id);
-  localStorage.setItem("egitim-pusulasi-profile", String(profile.id));
+  storageSet("egitim-pusulasi-profile", String(profile.id));
   await refresh();
 });
 
@@ -378,7 +406,7 @@ $("#delete-profile").addEventListener("click", async () => {
   const response = await fetch(`/api/profiles/${activeProfileId}`, { method: "DELETE" });
   const result = await response.json();
   if (!response.ok) return alert(result.error ?? "Profil silinemedi.");
-  localStorage.removeItem("egitim-pusulasi-profile");
+  storageRemove("egitim-pusulasi-profile");
   if (result.reset) {
     location.reload();
     return;
@@ -517,7 +545,7 @@ $("#export").addEventListener("click", async () => {
   link.href = url;
   link.download = `egitim-pusulasi-${new Date().toISOString().slice(0, 10)}.json`;
   link.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 1_000);
 });
 
 $("#calendar").addEventListener("click", async () => {
@@ -532,7 +560,7 @@ $("#calendar").addEventListener("click", async () => {
   link.href = url;
   link.download = `egitim-pusulasi-takvim-${new Date().toISOString().slice(0, 10)}.ics`;
   link.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 1_000);
   if (omitted) alert(`${eventCount} takvim olayı indirildi. Tahmin yapılmaması için ${omitted} belirsiz veya yılı eksik tarih takvime eklenmedi.`);
 });
 
@@ -571,7 +599,7 @@ $("#setup-form").addEventListener("submit", async event => {
 async function initialize() {
   const today = new Date();
   $("#weekly-anchor").value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-  const savedView = localStorage.getItem("egitim-pusulasi-view");
+  const savedView = storageGet("egitim-pusulasi-view");
   setView(["today", "week", "messages", "assistant", "settings"].includes(savedView) ? savedView : "today");
   await loadProfiles();
   await refreshK12Status();

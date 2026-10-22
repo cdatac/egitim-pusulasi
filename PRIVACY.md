@@ -9,13 +9,15 @@ Eğitim Pusulası çocukların okul verileriyle çalışır. Bu nedenle veri min
 - Her profilin iletileri, panosu, dışa aktarımı ve silme işlemleri birbirinden ayrıdır.
 - Yerel sınıflandırma kullanıldığında mesajlar üçüncü tarafa gönderilmez.
 - K12 parolası bu prototip tarafından saklanmaz.
+- İlk kurulum ekranı bu sınırları gösterir ve gerçek çocuk adı yerine takma ad kullanılmasını önerir.
 
 ## K12 yerel Chrome eşitlemesi
 
-Kullanıcı her çalıştırmada onay verirse uygulama, yalnızca `127.0.0.1:9222` üzerinde kullanıcı tarafından açılmış Chrome penceresindeki giriş yapılmış `https://*.k12net.com` sekmesine bağlanır. Mesaj ve duyurular açık veli oturumunda salt okunur çağrılarla alınır. Parola istenmez; Chrome çerezleri, istek başlıkları ve erişim belirteçleri veritabanına veya dışa aktarıma yazılmaz. İleti başlığı, gövdesi, göndereni, tarihi, türü ve K12 ileti kimliği seçili çocuk profilinde yerel olarak saklanır.
+Kullanıcı her çalıştırmada onay verirse uygulama, başlatıcının rastgele seçtiği bir `127.0.0.1` portundaki geçici gizli Chrome profilinde açık olan `https://*.k12net.com` sekmesine bağlanır. Parola istenmez; Chrome çerezleri, istek başlıkları ve erişim belirteçleri SQLite veritabanına veya dışa aktarıma yazılmaz. Geçici Chrome profili işletim sisteminin geçici dizininde tutulur ve Chrome kapandığında silinir. Kullanıcı Chrome'un parola saklama özelliğini kullanmamalıdır.
 
-Chrome uzaktan hata ayıklama arabirimi güçlü bir yerel yetkidir. Bu nedenle yalnızca Eğitim Pusulası için ayrılmış bir Chrome profili kullanın, bağlantı noktasını ağdaki başka cihazlara açmayın ve eşitleme bittikten sonra ayrılmış pencereyi kapatın.
-- İlk kurulum ekranı bu sınırları gösterir ve gerçek çocuk adı yerine takma ad kullanılmasını önerir.
+Uygulama yalnızca mesaj listesi ve ileti ayrıntısı için GET çağrıları yapar; K12'ye yazma isteği göndermez. Bununla birlikte K12 sunucusu bir ileti ayrıntısının açılmasını “okundu” olarak değerlendirebilir. İleti başlığı, gövdesi, göndereni, tarihi, türü ve K12 ileti kimliği seçili çocuk profilinde yerel olarak saklanır. İlk eşitlemede K12'de seçili öğrenci kimliği, açık onayla seçili yerel profile bağlanır; farklı öğrenciyle sonraki eşitleme durdurulur.
+
+Chrome uzaktan hata ayıklama arabirimi güçlü bir yerel yetkidir. Port yalnızca loopback üzerinde ve bağlantı penceresi açıkken kullanılır. Aynı bilgisayardaki başka bir süreç bu kısa süre içinde porta erişebilir; eşitleme bitince K12 Chrome penceresini kapatın.
 
 ## K12 bildirim dosyaları
 

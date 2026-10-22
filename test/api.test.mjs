@@ -9,9 +9,20 @@ import { DatabaseSync } from "node:sqlite";
 
 const root = path.resolve(import.meta.dirname, "..");
 
+async function reserveTestPort() {
+  const server = createServer();
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
+  });
+  const port = server.address().port;
+  await new Promise(resolve => server.close(resolve));
+  return port;
+}
+
 async function startServer(extraEnv = {}, preparedDataDir = null) {
   const dataDir = preparedDataDir ?? await mkdtemp(path.join(tmpdir(), "egitim-pusulasi-test-"));
-  const port = 42000 + Math.floor(Math.random() * 1000);
+  const port = await reserveTestPort();
   const child = spawn(process.execPath, ["--disable-warning=ExperimentalWarning", "server.mjs"], {
     cwd: root,
     env: { ...process.env, HOST: "127.0.0.1", PORT: String(port), DATA_DIR: dataDir, AI_API_URL: "", AI_API_KEY: "", AI_MODEL: "", ...extraEnv },
@@ -358,7 +369,7 @@ test("K12 bağlayıcı sözleşmesi kayıtları içe aktarır, tekrarları ayık
   assert.equal(connectors[0].id, "k12");
   assert.equal(connectors[0].mode, "read-only");
   assert.equal(connectors[0].networkImplementationAvailable, true);
-  assert.equal(connectors[0].status, "runtime-verified");
+  assert.equal(connectors[0].status, "experimental-runtime-verified");
   assert.equal(connectors[0].notificationImportAvailable, true);
 
   const fixture = JSON.parse(await readFile(path.join(root, "test", "fixtures", "k12-safe-sample.json"), "utf8"));
@@ -407,7 +418,23 @@ test("K12 bağlayıcı sözleşmesi kayıtları içe aktarır, tekrarları ayık
   assert.equal(notification.input, "notification-export");
   assert.equal(notification.imported, 1);
   assert.equal(notification.items[0].body, "Sınav 30 Ekim Cuma günü yapılacaktır.");
+  assert.equal(notification.items[0].bodyComplete, false);
   assert.doesNotMatch(JSON.stringify(notification.items[0]), /saklanmamalı/);
+
+  const deniedSync = await fetch(`${app.base}/api/connectors/k12/sync`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ profileId: stored[0].profileId, consent: false })
+  });
+  assert.equal(deniedSync.status, 400);
+
+  const unavailableSync = await fetch(`${app.base}/api/connectors/k12/sync`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ profileId: stored[0].profileId, consent: true, bindEnrollment: true })
+  });
+  assert.equal(unavailableSync.status, 400);
+  assert.equal((await unavailableSync.json()).code, "cdp_unavailable");
 });
 
 test("birden fazla çocuk profilini birbirinden ayırır", async t => {

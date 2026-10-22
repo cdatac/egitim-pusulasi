@@ -16,6 +16,7 @@ import { buildWeeklyLearningMap, WeeklyLearningValidationError } from "./lib/wee
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(ROOT, "data");
+const K12_CONNECTION_FILE = path.join(DATA_DIR, "k12-connection.json");
 await mkdir(DATA_DIR, { recursive: true });
 const db = new DatabaseSync(path.join(DATA_DIR, "egitim-pusulasi.db"));
 db.exec(`
@@ -38,6 +39,7 @@ db.exec(`
     sender TEXT,
     occurred_at TEXT,
     source_url TEXT,
+    body_complete INTEGER NOT NULL DEFAULT 1 CHECK(body_complete IN (0, 1)),
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(source, external_id)
   );
@@ -72,11 +74,22 @@ db.exec(`
     value TEXT NOT NULL,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
+  CREATE TABLE IF NOT EXISTS connector_profile_links (
+    profile_id INTEGER NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    connector TEXT NOT NULL,
+    external_account_id TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY(profile_id, connector),
+    UNIQUE(connector, external_account_id)
+  );
 `);
 
 const messageColumns = db.prepare("PRAGMA table_info(messages)").all();
 if (!messageColumns.some(column => column.name === "profile_id")) {
   db.exec("ALTER TABLE messages ADD COLUMN profile_id INTEGER REFERENCES profiles(id) ON DELETE CASCADE");
+}
+if (!messageColumns.some(column => column.name === "body_complete")) {
+  db.exec("ALTER TABLE messages ADD COLUMN body_complete INTEGER NOT NULL DEFAULT 1 CHECK(body_complete IN (0, 1))");
 }
 db.prepare(`INSERT INTO profiles(name, is_default) SELECT ?, 1 WHERE NOT EXISTS (SELECT 1 FROM profiles)`).run("Çocuğum");
 let defaultProfileId = Number(db.prepare("SELECT id FROM profiles ORDER BY is_default DESC, id ASC LIMIT 1").get().id);
@@ -147,6 +160,7 @@ function rowToMessage(row) {
     sender: row.sender,
     occurredAt: row.occurred_at,
     sourceUrl: row.source_url,
+    bodyComplete: Boolean(row.body_complete),
     createdAt: row.created_at,
     analysis: row.summary ? {
       summary: row.summary,
@@ -225,7 +239,7 @@ function resolveProfileId(value) {
 class ProfileValidationError extends Error {}
 
 async function importItems(items, fallbackProfileId = defaultProfileId) {
-  const insert = db.prepare(`INSERT OR IGNORE INTO messages(profile_id, source, external_id, kind, title, body, sender, occurred_at, source_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+  const insert = db.prepare(`INSERT OR IGNORE INTO messages(profile_id, source, external_id, kind, title, body, sender, occurred_at, source_url, body_complete) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const ids = [];
   for (const item of items.slice(0, 250)) {
     const profileId = resolveProfileId(item.profileId ?? fallbackProfileId);
@@ -235,12 +249,60 @@ async function importItems(items, fallbackProfileId = defaultProfileId) {
     const storedExternalId = item.externalId ? `${profileId}:${String(item.externalId)}` : null;
     const result = insert.run(profileId, String(item.source ?? "manual"), storedExternalId,
       String(item.kind ?? "message"), title, body, item.sender ? String(item.sender) : null,
-      item.occurredAt ? String(item.occurredAt) : null, item.sourceUrl ? String(item.sourceUrl) : null);
+      item.occurredAt ? String(item.occurredAt) : null, item.sourceUrl ? String(item.sourceUrl) : null, item.bodyComplete === false ? 0 : 1);
     if (result.changes > 0) ids.push(Number(result.lastInsertRowid));
   }
   for (const id of ids) await runAnalysis(id);
   return ids;
 }
+
+async function importK12SyncItems(items, profileId) {
+  const findPartial = db.prepare(`SELECT id FROM messages
+    WHERE profile_id = ? AND source = 'connector:k12' AND body_complete = 0
+      AND title = ? AND body = ? AND COALESCE(sender, '') = COALESCE(?, '')
+    ORDER BY id DESC LIMIT 2`);
+  const adoptExternalId = db.prepare("UPDATE messages SET external_id = ? WHERE id = ?");
+  for (const item of items) {
+    const storedExternalId = `${profileId}:${String(item.externalId)}`;
+    if (db.prepare("SELECT 1 FROM messages WHERE source = 'connector:k12' AND external_id = ?").get(storedExternalId)) continue;
+    const candidates = findPartial.all(profileId, String(item.title ?? "Başlıksız").trim().slice(0, 400), String(item.body ?? "").trim().slice(0, 40_000), item.sender ? String(item.sender) : null);
+    if (candidates.length === 1) adoptExternalId.run(storedExternalId, candidates[0].id);
+  }
+  const insertedIds = await importItems(items, profileId);
+  const inserted = new Set(insertedIds);
+  const updatedIds = [];
+  const update = db.prepare(`UPDATE messages SET kind = ?, title = ?, body = ?, sender = ?, occurred_at = ?, source_url = ?, body_complete = 1 WHERE id = ? AND body_complete = 0`);
+  for (const item of items) {
+    if (item.bodyComplete === false) continue;
+    const storedExternalId = `${profileId}:${String(item.externalId)}`;
+    const existing = db.prepare("SELECT id, body_complete FROM messages WHERE profile_id = ? AND source = 'connector:k12' AND external_id = ?").get(profileId, storedExternalId);
+    if (!existing || inserted.has(Number(existing.id)) || existing.body_complete) continue;
+    const result = update.run(String(item.kind ?? "message"), String(item.title ?? "Başlıksız").trim().slice(0, 400), String(item.body ?? "").trim().slice(0, 40_000), item.sender ? String(item.sender) : null, item.occurredAt ? String(item.occurredAt) : null, item.sourceUrl ? String(item.sourceUrl) : null, existing.id);
+    if (result.changes) {
+      await runAnalysis(Number(existing.id));
+      updatedIds.push(Number(existing.id));
+    }
+  }
+  return { insertedIds, updatedIds };
+}
+
+async function k12Endpoint() {
+  let connection;
+  try {
+    connection = JSON.parse(await readFile(K12_CONNECTION_FILE, "utf8"));
+  } catch {
+    throw new K12ConnectorError("K12 bağlantı penceresi bulunamadı. Önce K12 bağlantı başlatıcısını çalıştırın.", "cdp_unavailable");
+  }
+  const port = Number(connection?.port);
+  const createdAt = new Date(connection?.createdAt).getTime();
+  const connectionAge = Date.now() - createdAt;
+  if (!Number.isInteger(port) || port < 1024 || port > 65535 || !Number.isFinite(createdAt) || connectionAge < -5 * 60 * 1000 || connectionAge > 12 * 60 * 60 * 1000) {
+    throw new K12ConnectorError("K12 bağlantı bilgisi geçersiz veya süresi dolmuş.", "cdp_unavailable");
+  }
+  return `http://127.0.0.1:${port}`;
+}
+
+let k12SyncInProgress = false;
 
 async function api(req, res, url) {
   if (req.method === "GET" && url.pathname === "/api/health") {
@@ -357,7 +419,7 @@ async function api(req, res, url) {
   }
   if (req.method === "GET" && url.pathname === "/api/connectors/k12/status") {
     try {
-      const status = await inspectK12Browser();
+      const status = await inspectK12Browser({ endpoint: await k12Endpoint() });
       return json(res, 200, { connector: "k12", ...status, target: undefined });
     } catch (error) {
       if (error instanceof K12ConnectorError) return json(res, 200, { connector: "k12", available: false, loggedIn: false, error: error.message, code: error.code });
@@ -365,27 +427,48 @@ async function api(req, res, url) {
     }
   }
   if (req.method === "POST" && url.pathname === "/api/connectors/k12/sync") {
+    if (k12SyncInProgress) return json(res, 409, { error: "Başka bir K12 eşitlemesi sürüyor. Tamamlanmasını bekleyin.", code: "k12_sync_busy" });
+    k12SyncInProgress = true;
     try {
       const payload = await bodyJson(req);
       if (payload.consent !== true) return json(res, 400, { error: "K12 eşitlemesi için bu işlemde açık kullanıcı onayı gerekir." });
       const profileId = resolveProfileId(payload.profileId);
-      const sync = await syncK12Messages();
+      const knownExternalIds = db.prepare("SELECT external_id FROM messages WHERE profile_id = ? AND source = 'connector:k12' AND body_complete = 1 AND external_id IS NOT NULL").all(profileId)
+        .map(row => String(row.external_id).replace(new RegExp(`^${profileId}:`), ""));
+      const sync = await syncK12Messages({ endpoint: await k12Endpoint(), knownExternalIds });
+      const link = db.prepare("SELECT external_account_id AS externalAccountId FROM connector_profile_links WHERE profile_id = ? AND connector = 'k12'").get(profileId);
+      if (link && link.externalAccountId !== sync.enrollmentId) {
+        return json(res, 409, { error: "K12'de açık olan öğrenci bu Eğitim Pusulası profiliyle eşleşmiyor. Doğru öğrenciyi seçip yeniden deneyin.", code: "k12_profile_mismatch" });
+      }
+      const linkedElsewhere = db.prepare("SELECT profile_id AS profileId FROM connector_profile_links WHERE connector = 'k12' AND external_account_id = ?").get(sync.enrollmentId);
+      if (linkedElsewhere && Number(linkedElsewhere.profileId) !== profileId) {
+        return json(res, 409, { error: "K12'de açık olan öğrenci başka bir Eğitim Pusulası profiline bağlı.", code: "k12_enrollment_already_linked" });
+      }
+      if (!link) {
+        if (payload.bindEnrollment !== true) return json(res, 409, { error: "İlk eşitlemede açık K12 öğrencisini bu profile bağlamak için onay gerekir.", code: "k12_binding_consent_required" });
+        db.prepare("INSERT INTO connector_profile_links(profile_id, connector, external_account_id) VALUES (?, 'k12', ?)").run(profileId, sync.enrollmentId);
+      }
       const items = normalizeConnectorItems("k12", sync.records);
-      const ids = await importItems(items, profileId);
+      const imported = await importK12SyncItems(items, profileId);
+      const ids = [...imported.insertedIds, ...imported.updatedIds];
       return json(res, 200, {
         connector: "k12",
         mode: "local-browser-session",
-        scanned: sync.records.length,
-        imported: ids.length,
-        unchanged: sync.records.length - ids.length,
+        scanned: sync.scanned,
+        imported: imported.insertedIds.length,
+        updated: imported.updatedIds.length,
+        unchanged: sync.unchanged,
         detailResponses: sync.detailResponses,
         items: ids.map(getMessage)
       });
     } catch (error) {
       if (error instanceof K12ConnectorError || error instanceof ConnectorValidationError) {
-        return json(res, error.code === "k12_login_required" ? 401 : 400, { error: error.message, code: error.code });
+        const status = error.code === "k12_login_required" ? 401 : error.code === "k12_sync_busy" ? 409 : 400;
+        return json(res, status, { error: error.message, code: error.code });
       }
       throw error;
+    } finally {
+      k12SyncInProgress = false;
     }
   }
   if (req.method === "POST" && url.pathname === "/api/qa/preview") {

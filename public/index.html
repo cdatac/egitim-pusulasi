@@ -66,11 +66,11 @@
       </section>
 
       <nav class="main-tabs" aria-label="Ana bölümler">
-        <button class="tab-button active" type="button" data-view="today" aria-selected="true">Bugün</button>
-        <button class="tab-button" type="button" data-view="week" aria-selected="false">Haftam</button>
-        <button class="tab-button" type="button" data-view="messages" aria-selected="false">İletiler</button>
-        <button class="tab-button" type="button" data-view="assistant" aria-selected="false">Asistan</button>
-        <button class="tab-button" type="button" data-view="settings" aria-selected="false">Ayarlar</button>
+        <button class="tab-button active" type="button" data-view="today" aria-pressed="true">Bugün</button>
+        <button class="tab-button" type="button" data-view="week" aria-pressed="false">Haftam</button>
+        <button class="tab-button" type="button" data-view="messages" aria-pressed="false">İletiler</button>
+        <button class="tab-button" type="button" data-view="assistant" aria-pressed="false">Asistan</button>
+        <button class="tab-button" type="button" data-view="settings" aria-pressed="false">Ayarlar</button>
       </nav>
 
       <section class="profile-bar view-section" data-view-section="settings" aria-label="Çocuk profili ayarları" hidden>
@@ -106,6 +106,7 @@
             <p class="eyebrow">HAFTALIK ÖĞRENME VE ÖDEV TAKİBİ</p>
             <h2 id="weekly-learning-title">Kazanım haritası</h2>
             <p>Okulun konu/kazanım iletileri, ödevler ve etkinlikler kaynaklarına bağlı olarak birleştirilir.</p>
+            <p class="scope-note">Bu görünüm K12'nin ayrı Ödev modülünü değil, eşitlenen mesaj ve duyurulardaki bilgileri kullanır.</p>
           </div>
           <div class="weekly-controls">
             <label for="weekly-anchor">Haftası</label>

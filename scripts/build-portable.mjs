@@ -109,7 +109,7 @@ export async function buildPortable({
   const launcherPath = path.join(output, launcherName);
   await writeFile(launcherPath, launcher(platform), "utf8");
   if (platform !== "win32") await chmod(launcherPath, 0o755);
-  const k12LauncherName = platform === "win32" ? "K12-Baglantisini-Ac.cmd" : "k12-baglantisini-ac";
+  const k12LauncherName = platform === "win32" ? "K12-Baglantisini-Ac.cmd" : platform === "darwin" ? "K12-Baglantisini-Ac.command" : "k12-baglantisini-ac.sh";
   const k12LauncherPath = path.join(output, k12LauncherName);
   await writeFile(k12LauncherPath, k12Launcher(platform), "utf8");
   if (platform !== "win32") await chmod(k12LauncherPath, 0o755);

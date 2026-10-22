@@ -18,7 +18,7 @@ npm ci --ignore-scripts
 npm run check
 npm test
 npm run audit:release
-npm run release:verify -- v0.2.0
+npm run release:verify -- v0.2.1
 ```
 
 Son komut ancak etiket `package.json` sürümüyle eşleşirse, lisans ve zorunlu topluluk/güvenlik belgeleri varsa ve örnek GitHub güvenlik bağlantıları gerçek depo bilgileriyle değiştirilmişse başarılı olur. Hassas veri denetimi çalışma ağacını ve tüm Git geçmişini tarar.
@@ -33,13 +33,14 @@ Ek kontroller:
 
 ## Otomatik yayın
 
-`vMAJOR.MINOR.PATCH` etiketi gönderildiğinde `.github/workflows/release.yml`:
+Değişiklikler önce korumalı `main` dalına pull request ile birleştirilir. Etiket yalnızca bundan sonra, `main` üzerindeki doğrulanmış commit'e verilir. `vMAJOR.MINOR.PATCH` etiketi gönderildiğinde `.github/workflows/release.yml`:
 
-1. Test, sözdizimi ve yayın denetimlerini çalıştırır.
-2. Etiket-sürüm, lisans ve gerçek depo güvenlik bağlantıları kapısını doğrular.
-3. Yalnızca Git tarafından izlenen dosyalardan `.zip` ve `.tar.gz` üretir.
-4. Her arşiv için `SHA256SUMS.txt` oluşturur.
-5. Etikete bağlı GitHub Release yayımlar.
+1. Etiket commit'inin `origin/main` geçmişinde olduğunu doğrular.
+2. Test, sözdizimi ve yayın denetimlerini çalıştırır.
+3. Etiket-sürüm, lisans ve gerçek depo güvenlik bağlantıları kapısını doğrular.
+4. Yalnızca Git tarafından izlenen dosyalardan `.zip` ve `.tar.gz` üretir.
+5. Her arşiv için `SHA256SUMS.txt` oluşturur.
+6. Etikete bağlı GitHub Release yayımlar.
 
 Lisans eksikken veya sürüm uyuşmazken iş akışı bilinçli olarak başarısız olur. Etiket oluşturmak dış yayımdır; kullanıcı onayı ve son kontrol olmadan yapılmamalıdır.
 
