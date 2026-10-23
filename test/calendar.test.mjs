@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildCalendar } from "../lib/calendar.mjs";
+import { buildCalendar, buildPlannerCalendar } from "../lib/calendar.mjs";
 
 test("yalnızca açık ve geçerli tam tarihleri kaynaklı takvim olayına dönüştürür", () => {
   const result = buildCalendar([{
@@ -46,4 +46,40 @@ test("uzun UTF-8 satırlarını 75 baytı aşmadan katlar", () => {
     analysis: { category: "Duyuru", dates: [{ value: "01.12.2026" }], actionItems: [] }
   }], { generatedAt: "2026-10-21T10:00:00Z" });
   for (const line of result.content.split("\r\n")) assert.ok(Buffer.byteLength(line, "utf8") <= 75);
+});
+
+test("haftalık plan tarihli olayları ve yapılacak kontrol listesini birlikte dışa aktarır", () => {
+  const result = buildPlannerCalendar([{
+    id: 9,
+    title: "Hafta sonu ödevi",
+    body: "Kaynak",
+    analysis: {
+      category: "Ödev",
+      summary: "Kesir çalışma kağıdı",
+      dates: [{ value: "25.10.2026" }],
+      actionItems: [
+        { key: "a1", text: "Kesir çalışma kağıdını 25.10.2026 tarihinde bitir", completed: false },
+        { key: "a2", text: "Kitabı oku", completed: true }
+      ]
+    }
+  }], { generatedAt: "2026-10-23T17:00:00Z" });
+  const unfolded = result.content.replace(/\r\n[ \t]/g, "");
+  assert.equal(result.eventCount, 1);
+  assert.equal(result.taskCount, 2);
+  assert.match(unfolded, /BEGIN:VTODO/);
+  assert.match(unfolded, /SUMMARY:Kesir çalışma kağıdını 25.10.2026 tarihinde bitir/);
+  assert.match(unfolded, /DUE;VALUE=DATE:20261025/);
+  assert.match(unfolded, /STATUS:NEEDS-ACTION/);
+  assert.match(unfolded, /STATUS:COMPLETED/);
+  assert.doesNotMatch(unfolded, /COMPLETED:/);
+});
+
+test("görev metninde açık tarih yoksa ileti tarihini DUE olarak kullanmaz", () => {
+  const result = buildPlannerCalendar([{
+    id: 10,
+    title: "Birden çok görev",
+    body: "Kaynak",
+    analysis: { dates: [{ value: "25.10.2026" }], actionItems: [{ key: "a", text: "Kitabı oku", completed: false }] }
+  }], { generatedAt: "2026-10-23T17:00:00Z" });
+  assert.doesNotMatch(result.content, /DUE;VALUE=DATE/);
 });

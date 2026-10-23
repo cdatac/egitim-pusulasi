@@ -11,6 +11,14 @@ Eğitim Pusulası çocukların okul verileriyle çalışır. Bu nedenle veri min
 - K12 parolası bu prototip tarafından saklanmaz.
 - İlk kurulum ekranı bu sınırları gösterir ve gerçek çocuk adı yerine takma ad kullanılmasını önerir.
 
+## K12 yerel Chrome eşitlemesi
+
+Kullanıcı her çalıştırmada onay verirse uygulama, başlatıcının rastgele seçtiği bir `127.0.0.1` portundaki geçici gizli Chrome profilinde açık olan `https://*.k12net.com` sekmesine bağlanır. Parola istenmez; Chrome çerezleri, istek başlıkları ve erişim belirteçleri SQLite veritabanına veya dışa aktarıma yazılmaz. Geçici Chrome profili işletim sisteminin geçici dizininde tutulur ve Chrome kapandığında silinir. Kullanıcı Chrome'un parola saklama özelliğini kullanmamalıdır.
+
+Uygulama yalnızca mesaj listesi ve ileti ayrıntısı için GET çağrıları yapar; K12'ye yazma isteği göndermez. Bununla birlikte K12 sunucusu bir ileti ayrıntısının açılmasını “okundu” olarak değerlendirebilir. İleti başlığı, gövdesi, göndereni, tarihi, türü ve K12 ileti kimliği seçili çocuk profilinde yerel olarak saklanır. İlk eşitlemede K12'de seçili öğrenci kimliği, açık onayla seçili yerel profile bağlanır; farklı öğrenciyle sonraki eşitleme durdurulur.
+
+Chrome uzaktan hata ayıklama arabirimi güçlü bir yerel yetkidir. Port yalnızca loopback üzerinde ve bağlantı penceresi açıkken kullanılır. Aynı bilgisayardaki başka bir süreç bu kısa süre içinde porta erişebilir; eşitleme bitince K12 Chrome penceresini kapatın.
+
 ## K12 bildirim dosyaları
 
 Kullanıcı uyumlu bir bildirim JSON dosyasını kendisi seçerse yalnızca ileti başlığı, `message`/`body` gövdesi, isteğe bağlı gönderen, alınma zamanı, güvenli kaynak URL'si ve dış kimlik yerel kayda dönüştürülür. K12'nin uygulama içi `intent`, `portal` ve `query` yönlendirme alanları atılır. Parola, token, oturum, çerez veya yetkilendirme alanı bulunan kayıtlar tümüyle reddedilir.

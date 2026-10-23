@@ -19,6 +19,16 @@ Başlatıcı İnternet'ten yazılım indirmez. Node.js eksikse yalnızca resmî 
 
 Ayrıntılı kurulum, güncelleme, yedekleme ve kaldırma adımları için [kurulum belgesine](docs/INSTALL.md); günlük kullanım için [Türkçe kullanıcı rehberine](docs/USER_GUIDE.md) bakın.
 
+### K12'den otomatik eşitleme
+
+1. Windows'ta `K12-Baglantisini-Ac.cmd` dosyasına çift tıklayın. macOS'ta `K12-Baglantisini-Ac.command` dosyasını, Linux'ta `sh k12-baglantisini-ac.sh` komutunu kullanın.
+2. Açılan ayrı Chrome penceresinde K12 veli hesabınıza giriş yapın.
+3. Eğitim Pusulası'nda doğru çocuk profilini seçip **Bağlantıyı kontrol et**, ardından **K12'den eşitle** düğmesine basın.
+
+Bu pencere rastgele bir localhost portu ve geçici gizli Chrome profili kullanır. Başlatıcı penceresini Chrome kapanana kadar açık bırakın; Chrome kapanınca geçici profil silinir. Parolayı Chrome'a kaydetmeyin. Ayrıntılı adımlar [kullanım kılavuzundadır](docs/USER_GUIDE.md#3-k12-bağlantısı-ve-eşitleme).
+
+v0.2.0 kullandıysanız eski K12 penceresini kapatın ve **Ayarlar → Eski K12 tarayıcı verilerini sil** düğmesini kullanın. Bu işlem yalnızca eski `data/k12-chrome-profile` klasörünü kaldırır. Yanlış öğrenci bağlandıysa aynı ekrandaki **K12 öğrenci bağını kaldır** düğmesiyle yeniden bağlayabilirsiniz; farklı çocukların verileri karışmasın diye bu işlem seçili profilde K12'den alınmış iletileri de siler, manuel kayıtları korur.
+
 ### macOS veya Linux
 
 ```sh
@@ -79,6 +89,9 @@ Anahtarsız kullanım yalnızca `127.0.0.1`, `localhost` veya `::1` adreslerinde
 
 - Manuel duyuru/mesaj içe aktarma
 - Parola veya oturum bilgisi taşımayan K12 bildirim JSON dosyasını seçili çocuk profiline aktarma
+- Ayrılmış yerel Chrome oturumundan K12 mesaj ve duyurularını onaylı, salt-okunur eşitleme
+- Haftanın konu/kazanım iletilerini ders bazında haritalama ve ödevlerle kaynaklı karşılaştırma
+- Tamamlanabilir haftalık kontrol listesi ile etkinlik ve görevleri birleştiren `.ics` takvim dışa aktarımı
 - Yerel SQLite kayıt
 - Kaynağı koruyan özet kartları
 - Kategori, öncelik, tarih ve yapılacak iş çıkarma
@@ -95,7 +108,7 @@ Anahtarsız kullanım yalnızca `127.0.0.1`, `localhost` veya `::1` adreslerinde
 - En fazla beş yerel kaynak seçen, açık onaylı ve kaynak kimlikli AI soru-cevap
 - Yerel veri ve takma ad seçeneklerini açıklayan ilk kurulum ekranı
 
-K12'ye doğrudan bağlanan otomatik ağ bağlayıcısı, kullanıcı oturumundaki salt-okunur çağrılar çalışma zamanında doğrulanana kadar kapalıdır. Uygulama K12 parolasını saklamaz. Uyumlu bildirim dışa aktarımları arayüzden alınabilir; uygulama içi `intent`, `portal` ve `query` yönlendirme alanları saklanmaz.
+K12 mesaj ve duyuru çağrıları kullanıcıya ait veli oturumunda deneysel olarak doğrulanmıştır. Başlatıcı her çalıştırmada rastgele bir `127.0.0.1` portu ve geçici gizli Chrome profili oluşturur; parola, çerez veya token Eğitim Pusulası veritabanına kaydedilmez. Eşitleme K12'ye yazma isteği göndermez; ancak ileti ayrıntısının açılması K12 tarafından “okundu” olarak değerlendirilebilir. İlk eşitlemede K12'de seçili öğrenci, açık onayla Eğitim Pusulası profiline bağlanır. Not, devamsızlık, K12 Ödev ve sınav modülleri henüz otomatik eşitlemeye dahil değildir.
 
 Bağlayıcıların veri ve güvenlik sözleşmesi için [docs/CONNECTORS.md](docs/CONNECTORS.md) belgesine bakın.
 

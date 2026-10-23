@@ -9,7 +9,8 @@ Projenin ana deposu `https://github.com/cdatac/egitim-pusulasi` adresindedir. Ya
 3. `.github/ISSUE_TEMPLATE/config.yml` içindeki güvenlik bağlantısının gerçek depo yolunu kullandığı doğrulanır.
 4. GitHub özel güvenlik bildirimleri etkinleştirilir ve [SECURITY.md](../SECURITY.md) gerçek özel bildirim kanalını gösterir.
 5. Ana dal koruması; pull request, başarılı CI ve force-push engeliyle yapılandırılır.
-6. Depo açıklamasında projenin K12 ile resmî bağlantısı olmadığı belirtilir.
+6. `v*` etiketleri için yalnızca depo yöneticilerinin etiket oluşturabildiği bir GitHub tag ruleset yapılandırılır; mümkünse Release işi zorunlu onaylı bir environment arkasına alınır.
+7. Depo açıklamasında projenin K12 ile resmî bağlantısı olmadığı belirtilir.
 
 ## Her sürümden önce
 
@@ -18,7 +19,7 @@ npm ci --ignore-scripts
 npm run check
 npm test
 npm run audit:release
-npm run release:verify -- v0.1.0
+npm run release:verify -- v0.2.1
 ```
 
 Son komut ancak etiket `package.json` sürümüyle eşleşirse, lisans ve zorunlu topluluk/güvenlik belgeleri varsa ve örnek GitHub güvenlik bağlantıları gerçek depo bilgileriyle değiştirilmişse başarılı olur. Hassas veri denetimi çalışma ağacını ve tüm Git geçmişini tarar.
@@ -33,13 +34,14 @@ Ek kontroller:
 
 ## Otomatik yayın
 
-`vMAJOR.MINOR.PATCH` etiketi gönderildiğinde `.github/workflows/release.yml`:
+Değişiklikler önce korumalı `main` dalına pull request ile birleştirilir. Etiket yalnızca bundan sonra, `main` üzerindeki doğrulanmış commit'e verilir. İş akışı içindeki ata-kontrolü savunma katmanıdır; eski bir commit'teki eski iş akışına karşı asıl koruma GitHub tag ruleset'idir. `vMAJOR.MINOR.PATCH` etiketi gönderildiğinde güncel `.github/workflows/release.yml`:
 
-1. Test, sözdizimi ve yayın denetimlerini çalıştırır.
-2. Etiket-sürüm, lisans ve gerçek depo güvenlik bağlantıları kapısını doğrular.
-3. Yalnızca Git tarafından izlenen dosyalardan `.zip` ve `.tar.gz` üretir.
-4. Her arşiv için `SHA256SUMS.txt` oluşturur.
-5. Etikete bağlı GitHub Release yayımlar.
+1. Etiket commit'inin `origin/main` geçmişinde olduğunu doğrular.
+2. Test, sözdizimi ve yayın denetimlerini çalıştırır.
+3. Etiket-sürüm, lisans ve gerçek depo güvenlik bağlantıları kapısını doğrular.
+4. Yalnızca Git tarafından izlenen dosyalardan `.zip` ve `.tar.gz` üretir.
+5. Her arşiv için `SHA256SUMS.txt` oluşturur.
+6. Etikete bağlı GitHub Release yayımlar.
 
 Lisans eksikken veya sürüm uyuşmazken iş akışı bilinçli olarak başarısız olur. Etiket oluşturmak dış yayımdır; kullanıcı onayı ve son kontrol olmadan yapılmamalıdır.
 

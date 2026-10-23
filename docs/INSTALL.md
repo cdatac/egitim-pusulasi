@@ -23,6 +23,8 @@ Oluşturucu mevcut bir çıktı dizininin üzerine yazmaz; `data/`, Git geçmiş
 
 Windows bilinmeyen bir `.cmd` dosyası için uyarı gösterebilir. Dosya düz metindir; çalıştırmadan önce içeriği bir metin düzenleyicisinde inceleyebilirsiniz. Proje PowerShell çalıştırma politikasını değiştirmez.
 
+K12 eşitlemesi için ayrıca `K12-Baglantisini-Ac.cmd` dosyasına çift tıklayın. Başlatıcı penceresini K12 Chrome penceresi kapanana kadar açık bırakın. Rastgele bir localhost portu ve işletim sisteminin geçici dizininde gizli Chrome profili kullanılır; Chrome kapanınca profil silinir. Parolayı Chrome'a kaydetmeyin. v0.2.0'dan yükseltiyorsanız eski K12 penceresini kapatıp Ayarlar'daki **Eski K12 tarayıcı verilerini sil** düğmesini kullanın; böylece eski `data/k12-chrome-profile` içindeki oturum çerezleri yedeğe taşınmaz. Ayrıntılar [kullanım kılavuzundadır](USER_GUIDE.md#3-k12-bağlantısı-ve-eşitleme).
+
 ## macOS ve Linux
 
 Terminalde proje klasörüne geçin ve:
@@ -32,6 +34,8 @@ sh start.sh
 ```
 
 Durdurmak için `Ctrl+C` kullanın. Masaüstü ortamında tarayıcı otomatik açılamazsa terminalde gösterilen yerel adresi elle açın.
+
+macOS'ta K12 bağlantısı için `K12-Baglantisini-Ac.command` dosyasına çift tıklayın; Linux'ta ayrı bir terminalde `sh k12-baglantisini-ac.sh` çalıştırın. Başlatıcı/terminal Chrome kapanana kadar açık kalmalıdır.
 
 ## Docker
 
@@ -46,6 +50,8 @@ Compose bu değeri konteynere `PUBLIC_PORT` olarak aktarır; böylece Host ve Or
 Konteyner `node` kullanıcısıyla, salt-okunur kök dosya sistemiyle, düşürülmüş Linux yetenekleriyle ve süreç sayısı sınırıyla çalışır. Kalıcı yazma yalnızca `/data` volume'üne, geçici yazma sınırlı `/tmp` alanına yapılır. İmaj yerleşik sağlık kontrolü içerir.
 
 Compose portu yalnızca `127.0.0.1` üzerinde yayımlar ve veriyi `egitim-pusulasi-data` adlı volume içinde tutar. Volume silinirse yerel okul verileri de silinir.
+
+K12 Chrome eşitlemesi Docker seçeneğinde desteklenmez; konteyner ana makinedeki geçici Chrome denetim portuna erişmez. K12 eşitlemesi gerekiyorsa doğrudan Node.js/taşınabilir masaüstü başlatıcısını kullanın.
 
 `4173` doluysa yalnızca localhost üzerinde farklı bir port seçilebilir:
 
@@ -63,7 +69,7 @@ JSON veya `.ics` dosyaları gerçek okul içeriği barındırabilir. Bunları e-
 ## Güncelleme
 
 1. Uygulamayı durdurun.
-2. `data` klasörünün güvenli bir kopyasını alın.
+2. Geçici K12 Chrome penceresini kapatın. v0.2.0'dan geliyorsanız `data/k12-chrome-profile` klasörünü silin; bu klasörü yedeklemeyin. Ardından kalan `data` klasörünün güvenli bir kopyasını alın.
 3. Yeni sürüm dosyalarını indirin.
 4. Eski `data` klasörünü yeni sürüm klasörüne taşıyın veya `DATA_DIR` ile aynı veri klasörünü seçin.
 5. Başlatıcıyı çalıştırın. Veritabanı geçişleri başlangıçta otomatik uygulanır.

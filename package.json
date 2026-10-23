@@ -1,6 +1,6 @@
 {
   "name": "egitim-pusulasi",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "private": true,
   "license": "AGPL-3.0-only",
   "repository": {
@@ -16,7 +16,8 @@
     "doctor": "node scripts/doctor.mjs",
     "start": "node scripts/doctor.mjs && node --disable-warning=ExperimentalWarning server.mjs",
     "launch": "node scripts/launch.mjs",
-    "check": "node --check server.mjs && node --check lib/ai-config.mjs && node --check lib/ai-client.mjs && node --check lib/analyze.mjs && node --check lib/calendar.mjs && node --check lib/digest.mjs && node --check lib/qa.mjs && node --check lib/connectors/contract.mjs && node --check public/app.js && node --check public/import-utils.js && node --check scripts/build-portable.mjs && node --check scripts/doctor.mjs && node --check scripts/launch.mjs && node --check scripts/release-audit.mjs && node --check scripts/verify-release.mjs",
+    "k12:browser": "node scripts/open-k12-browser.mjs",
+    "check": "node --check server.mjs && node --check lib/ai-config.mjs && node --check lib/ai-client.mjs && node --check lib/analyze.mjs && node --check lib/calendar.mjs && node --check lib/digest.mjs && node --check lib/qa.mjs && node --check lib/weekly-learning.mjs && node --check lib/connectors/contract.mjs && node --check lib/connectors/k12-cdp.mjs && node --check public/app.js && node --check public/import-utils.js && node --check scripts/build-portable.mjs && node --check scripts/doctor.mjs && node --check scripts/launch.mjs && node --check scripts/open-k12-browser.mjs && node --check scripts/release-audit.mjs && node --check scripts/verify-release.mjs",
     "build:portable": "node scripts/build-portable.mjs",
     "test": "node --disable-warning=ExperimentalWarning --test",
     "audit:release": "node scripts/release-audit.mjs",

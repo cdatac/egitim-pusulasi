@@ -47,3 +47,8 @@ test("klavye odağı, azaltılmış hareket ve renkten bağımsız öncelik sunu
   assert.match(app, /prefers-reduced-motion: reduce/);
   assert.match(app, />Öncelikli<\/span>/);
 });
+
+test("saklanmış düz ileti metni görünümde yeniden HTML olarak çözümlenmez", () => {
+  assert.doesNotMatch(app, /function plain\(/);
+  assert.match(app, /esc\(item\.body\)/);
+});
