@@ -56,6 +56,15 @@ test("çift kodlanmış HTML metnini etikete dönüştürmez", () => {
   assert.equal(record.body, "&lt;script&gt;");
 });
 
+test("liste ve ayrıntı kimliklerini parantez ve harf biçiminden bağımsız eşleştirir", () => {
+  const [record] = normalizeK12Messages(
+    [{ RootResults: [{ ID: "{AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA}", Subject: "Bilgi" }] }],
+    [{ RootResults: [{ ID: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", Body: "Tam ayrıntı" }] }]
+  );
+  assert.equal(record.body, "Tam ayrıntı");
+  assert.equal(record.bodyComplete, true);
+});
+
 test("K12 .NET tarihini standart ISO tarihe dönüştürür", () => {
   const [record] = normalizeK12Messages([{ RootResults: [{ ID: "abc", Subject: "Bilgi", SendDate: "/Date(1792652400000+0300)/" }] }]);
   assert.equal(record.occurredAt, "2026-10-22T07:00:00.000Z");
@@ -64,6 +73,7 @@ test("K12 .NET tarihini standart ISO tarihe dönüştürür", () => {
 test("eşitleme yalnızca yeni ileti ayrıntısını alır ve öğrenci kimliğini doğrular", async () => {
   const knownId = "{11111111-1111-1111-1111-111111111111}";
   const newId = "{22222222-2222-2222-2222-222222222222}";
+  let evaluated = 0;
   class FakeWebSocket {
     constructor() {
       this.listeners = new Map();
@@ -99,6 +109,7 @@ test("eşitleme yalnızca yeni ileti ayrıntısını alır ve öğrenci kimliği
         return;
       }
       if (command.method === "Runtime.evaluate") {
+        evaluated += 1;
         assert.match(command.params.expression, /22222222-2222-2222-2222-222222222222/);
         assert.doesNotMatch(command.params.expression, /11111111-1111-1111-1111-111111111111/);
         this.message({ id: command.id, result: { result: { value: { RootResults: [{ ID: newId, Body: "Yeni ileti ayrıntısı" }] } } } });
@@ -109,7 +120,22 @@ test("eşitleme yalnızca yeni ileti ayrıntısını alır ve öğrenci kimliği
     close() { this.emit("close", {}); }
   }
   const fetchImpl = async () => ({ ok: true, json: async () => [{ id: "k12", type: "page", url: "https://school.k12net.com/SPTS.Web/", webSocketDebuggerUrl: "ws://127.0.0.1:9222/k12" }] });
-  const result = await syncK12Messages({ fetchImpl, WebSocketImpl: FakeWebSocket, knownExternalIds: [knownId] });
+  await assert.rejects(
+    () => syncK12Messages({ fetchImpl, WebSocketImpl: FakeWebSocket, knownExternalIds: [knownId] }),
+    error => error instanceof K12ConnectorError && error.code === "k12_binding_consent_required"
+  );
+  assert.equal(evaluated, 0);
+  await assert.rejects(
+    () => syncK12Messages({ fetchImpl, WebSocketImpl: FakeWebSocket, knownExternalIds: [knownId], expectedEnrollmentId: "baska-ogrenci", allowEnrollmentBinding: true }),
+    error => error instanceof K12ConnectorError && error.code === "k12_profile_mismatch"
+  );
+  assert.equal(evaluated, 0);
+  const partial = await syncK12Messages({ fetchImpl, WebSocketImpl: FakeWebSocket, knownExternalIds: [knownId], allowEnrollmentBinding: true, detailBudgetMs: 0 });
+  assert.equal(partial.deferred, 1);
+  assert.equal(partial.records.length, 1);
+  assert.equal(partial.records[0].bodyComplete, false);
+  assert.equal(evaluated, 0);
+  const result = await syncK12Messages({ fetchImpl, WebSocketImpl: FakeWebSocket, knownExternalIds: [knownId], allowEnrollmentBinding: true });
   assert.equal(result.enrollmentId, "ogrenci-123");
   assert.equal(result.scanned, 2);
   assert.equal(result.unchanged, 1);
@@ -117,6 +143,7 @@ test("eşitleme yalnızca yeni ileti ayrıntısını alır ve öğrenci kimliği
   assert.equal(result.records.length, 1);
   assert.equal(result.records[0].body, "Yeni ileti ayrıntısı");
   assert.equal(result.records[0].bodyComplete, true);
+  assert.equal(evaluated, 1);
 });
 
 test("yanıt vermeyen CDP oturumunu toplam zaman aşımıyla kapatır", async () => {

@@ -9,7 +9,8 @@ Projenin ana deposu `https://github.com/cdatac/egitim-pusulasi` adresindedir. Ya
 3. `.github/ISSUE_TEMPLATE/config.yml` içindeki güvenlik bağlantısının gerçek depo yolunu kullandığı doğrulanır.
 4. GitHub özel güvenlik bildirimleri etkinleştirilir ve [SECURITY.md](../SECURITY.md) gerçek özel bildirim kanalını gösterir.
 5. Ana dal koruması; pull request, başarılı CI ve force-push engeliyle yapılandırılır.
-6. Depo açıklamasında projenin K12 ile resmî bağlantısı olmadığı belirtilir.
+6. `v*` etiketleri için yalnızca depo yöneticilerinin etiket oluşturabildiği bir GitHub tag ruleset yapılandırılır; mümkünse Release işi zorunlu onaylı bir environment arkasına alınır.
+7. Depo açıklamasında projenin K12 ile resmî bağlantısı olmadığı belirtilir.
 
 ## Her sürümden önce
 
@@ -33,7 +34,7 @@ Ek kontroller:
 
 ## Otomatik yayın
 
-Değişiklikler önce korumalı `main` dalına pull request ile birleştirilir. Etiket yalnızca bundan sonra, `main` üzerindeki doğrulanmış commit'e verilir. `vMAJOR.MINOR.PATCH` etiketi gönderildiğinde `.github/workflows/release.yml`:
+Değişiklikler önce korumalı `main` dalına pull request ile birleştirilir. Etiket yalnızca bundan sonra, `main` üzerindeki doğrulanmış commit'e verilir. İş akışı içindeki ata-kontrolü savunma katmanıdır; eski bir commit'teki eski iş akışına karşı asıl koruma GitHub tag ruleset'idir. `vMAJOR.MINOR.PATCH` etiketi gönderildiğinde güncel `.github/workflows/release.yml`:
 
 1. Etiket commit'inin `origin/main` geçmişinde olduğunu doğrular.
 2. Test, sözdizimi ve yayın denetimlerini çalıştırır.

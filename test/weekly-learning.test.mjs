@@ -70,6 +70,22 @@ test("ders ve öğrenme köklerini ilgisiz sözcüklerin içinde eşleştirmez",
   assert.equal(result.subjects.some(item => item.subject === "Fen Bilimleri"), false);
 });
 
+test("genel veli ifadelerini kazanım saymaz ve özgün harf yapısını korur", () => {
+  const result = buildWeeklyLearningMap([
+    message(1, "Matematik haftası", "Bu konuda desteğinizi bekliyoruz.\nMatematik: Özel İsimleri ve Kesirleri işledik.", "2026-10-23T15:00:00+03:00")
+  ], { anchor: "2026-10-23" });
+  assert.equal(result.learnings.length, 1);
+  assert.match(result.learnings[0].text, /Özel İsimleri ve Kesirleri/);
+  assert.doesNotMatch(result.learnings[0].text, /desteğinizi/);
+});
+
+test("saat dilimi olmayan K12 zamanını İstanbul saati kabul eder", () => {
+  const result = buildWeeklyLearningMap([
+    message(1, "Matematik kazanımları", "Matematik: Kesirleri işledik.", "2026-10-25T23:30:00")
+  ], { anchor: "2026-10-25" });
+  assert.equal(result.sourceCount, 1);
+});
+
 test("İstanbul saatine göre pazartesiye geçen iletiyi doğru haftaya alır", () => {
   const result = buildWeeklyLearningMap([
     message(1, "Matematik kazanımları", "Matematik: Kesirleri işledik.", "2026-10-25T22:30:00Z")

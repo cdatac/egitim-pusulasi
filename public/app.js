@@ -25,24 +25,9 @@ function esc(value = "") {
   return String(value).replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
 }
 
-function plain(value = "") {
-  return String(value)
-    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
-    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
-    .replace(/<[^>]*>?/g, " ")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&lt;/gi, "<")
-    .replace(/&gt;/gi, ">")
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
-    .replace(/&amp;/gi, "&")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 function formatDate(value) {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return plain(value);
+  if (Number.isNaN(date.getTime())) return String(value ?? "");
   return new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(date);
 }
 
@@ -71,16 +56,16 @@ function render() {
   feed.innerHTML = messages.map(item => {
     const analysis = item.analysis;
     const dates = analysis?.dates?.map(date => `<span class="chip date">${esc(date.value)}</span>`).join("") ?? "";
-    const tasks = analysis?.actionItems?.map(task => `<li class="${task.completed ? "completed" : ""}"><label><input class="task-toggle" type="checkbox" data-message-id="${item.id}" data-task-key="${esc(task.key)}" ${task.completed ? "checked" : ""}> <span>${esc(plain(task.text))}</span></label></li>`).join("") ?? "";
+    const tasks = analysis?.actionItems?.map(task => `<li class="${task.completed ? "completed" : ""}"><label><input class="task-toggle" type="checkbox" data-message-id="${item.id}" data-task-key="${esc(task.key)}" ${task.completed ? "checked" : ""}> <span>${esc(task.text)}</span></label></li>`).join("") ?? "";
     return `<article id="message-${item.id}" class="message ${analysis?.priority === "yüksek" ? "high" : ""}">
       <div class="message-head">
         <div><span class="chip">${esc(analysis?.category ?? item.kind)}</span>${analysis?.priority === "yüksek" ? `<span class="chip priority">Öncelikli</span>` : ""}${dates}</div>
         <small>${esc(formatDate(item.occurredAt || item.createdAt))}</small>
       </div>
-      <h3>${esc(plain(item.title))}</h3>
-      <p class="summary">${esc(plain(analysis?.summary ?? item.body))}</p>
+      <h3>${esc(item.title)}</h3>
+      <p class="summary">${esc(analysis?.summary ?? item.body)}</p>
       ${tasks ? `<div class="actions"><strong>Yapılacaklar</strong><ul>${tasks}</ul></div>` : ""}
-      <details><summary>Kaynak iletiyi göster</summary><p>${esc(plain(item.body))}</p><small>${esc(plain(item.sender ?? "Kaynak belirtilmedi"))} · ${esc(analysis?.provider ?? "işlenmedi")}</small></details>
+      <details><summary>Kaynak iletiyi göster</summary><p>${esc(item.body)}</p><small>${esc(item.sender ?? "Kaynak belirtilmedi")} · ${esc(analysis?.provider ?? "işlenmedi")}</small></details>
       <div class="message-controls">
         ${aiConfigured ? `<button class="ai-message" data-id="${item.id}">AI ile analiz et</button>` : ""}
         <button class="delete-message" data-id="${item.id}" aria-label="${esc(item.title)} iletisini sil">İletiyi sil</button>
@@ -129,7 +114,7 @@ function renderWeeklyLearning() {
   </div>`;
   const subjects = weeklyLearning.subjects.map(group => {
     const learnings = group.learnings.length
-      ? `<ul>${group.learnings.map(item => `<li>${esc(plain(item.text))} <a href="#message-${item.messageId}">#${item.messageId}</a></li>`).join("")}</ul>`
+      ? `<ul>${group.learnings.map(item => `<li>${esc(item.text)} <a href="#message-${item.messageId}">#${item.messageId}</a></li>`).join("")}</ul>`
       : `<p class="digest-empty">Bu ders için açık kazanım ifadesi bulunamadı.</p>`;
     const tasks = group.tasks.length
       ? `<ul>${group.tasks.map(task => {
@@ -139,13 +124,13 @@ function renderWeeklyLearning() {
           const checkbox = task.taskKey
             ? `<input class="weekly-task-toggle" type="checkbox" data-message-id="${task.messageId}" data-task-key="${esc(task.taskKey)}" ${task.completed ? "checked" : ""}>`
             : `<input type="checkbox" disabled title="Kaynak iletide ayrı bir görev olarak işaretlenmemiş">`;
-          return `<li><label class="weekly-task ${task.completed ? "completed" : ""}">${checkbox}<span>${esc(plain(task.text))}<small class="match-note ${task.match.status === "eşleşti" ? "" : "review"}">${esc(plain(note))} · <a href="#message-${task.messageId}">kaynak #${task.messageId}</a></small></span></label></li>`;
+          return `<li><label class="weekly-task ${task.completed ? "completed" : ""}">${checkbox}<span>${esc(task.text)}<small class="match-note ${task.match.status === "eşleşti" ? "" : "review"}">${esc(note)} · <a href="#message-${task.messageId}">kaynak #${task.messageId}</a></small></span></label></li>`;
         }).join("")}</ul>`
       : `<p class="digest-empty">Bu ders için ödev bulunamadı.</p>`;
     return `<article class="weekly-subject"><h3>${esc(group.subject)}</h3><div class="weekly-columns"><div><h4>Kazanım ve konular</h4>${learnings}</div><div><h4>Ödev kontrolü</h4>${tasks}</div></div></article>`;
   }).join("");
   const activities = weeklyLearning.activities.length
-    ? `<div class="weekly-activities"><h3>Etkinlikler</h3><ul>${weeklyLearning.activities.map(item => `<li>${esc(plain(item.title))} · ${esc(plain(item.summary))} <a href="#message-${item.messageId}">#${item.messageId}</a></li>`).join("")}</ul></div>`
+    ? `<div class="weekly-activities"><h3>Etkinlikler</h3><ul>${weeklyLearning.activities.map(item => `<li>${esc(item.title)} · ${esc(item.summary)} <a href="#message-${item.messageId}">#${item.messageId}</a></li>`).join("")}</ul></div>`
     : "";
   content.innerHTML = `${summary}<div class="weekly-subjects">${subjects || `<p class="digest-empty">Kaynak iletilerde ayrıştırılabilir ders veya ödev bulunamadı.</p>`}</div>${activities}<small class="weekly-method">${esc(weeklyLearning.methodology)}</small>`;
 }
@@ -202,8 +187,10 @@ async function refreshK12Status() {
   button.disabled = true;
   statusBox.textContent = "K12 bağlantısı kontrol ediliyor…";
   try {
-    const response = await fetch("/api/connectors/k12/status");
+    const response = await fetch(`/api/connectors/k12/status?profileId=${encodeURIComponent(activeProfileId)}`);
     const status = await response.json();
+    $("#k12-unlink").hidden = !status.linked;
+    $("#k12-legacy-cleanup").hidden = !status.legacyProfileDetected;
     if (status.available && status.loggedIn) {
       statusBox.textContent = "K12 veli oturumu hazır. Mesaj ve duyurular eşitlenebilir.";
       button.disabled = false;
@@ -219,30 +206,60 @@ async function refreshK12Status() {
 
 $("#k12-status-refresh").addEventListener("click", refreshK12Status);
 
-$("#k12-sync").addEventListener("click", async () => {
+async function runK12Sync(bindEnrollment = false) {
   const button = $("#k12-sync");
   const statusBox = $("#k12-sync-status");
-  const profileName = profiles.find(profile => profile.id === activeProfileId)?.name ?? "seçili profil";
-  const accepted = confirm(`K12 penceresinde şu anda seçili öğrencinin en fazla 250 mesaj ve duyurusu “${profileName}” profiline bağlanacak. İleti ayrıntılarının açılması K12 tarafından “okundu” olarak değerlendirilebilir. K12'ye mesaj gönderilmeyecek. Doğru öğrenci açık mı ve devam edilsin mi?`);
-  if (!accepted) return;
   button.disabled = true;
   statusBox.textContent = "K12 mesaj ve duyuruları okunuyor… Bu işlem biraz sürebilir.";
   try {
     const response = await fetch("/api/connectors/k12/sync", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ profileId: activeProfileId, consent: true, bindEnrollment: true }),
+      body: JSON.stringify({ profileId: activeProfileId, consent: true, bindEnrollment }),
       signal: AbortSignal.timeout(65_000)
     });
     const result = await response.json();
+    if (!response.ok && result.code === "k12_binding_consent_required") {
+      const profileName = profiles.find(profile => profile.id === activeProfileId)?.name ?? "seçili profil";
+      const accepted = confirm(`K12'de açık olan öğrenci henüz “${profileName}” profiline bağlı değil. Bu öğrenciyle profili kalıcı olarak eşleştirip ileti ayrıntılarını almaya devam edilsin mi? Yanlış öğrenci açıksa İptal'e basın.`);
+      if (!accepted) {
+        statusBox.textContent = "K12 öğrenci–profil bağı oluşturulmadı.";
+        return;
+      }
+      return await runK12Sync(true);
+    }
     if (!response.ok) throw new Error(result.error ?? "K12 eşitlemesi başarısız oldu.");
-    statusBox.textContent = `${result.scanned} K12 kaydı tarandı; ${result.imported} yeni kayıt eklendi, ${result.updated ?? 0} eksik kayıt tamamlandı, ${result.unchanged} kayıt zaten vardı.`;
+    const deferred = result.deferred ? `, ${result.deferred} ayrıntı sonraki eşitlemeye bırakıldı` : "";
+    statusBox.textContent = `${result.scanned} K12 kaydı tarandı; ${result.imported} yeni kayıt eklendi, ${result.updated ?? 0} eksik kayıt tamamlandı, ${result.unchanged} kayıt zaten vardı${deferred}.`;
     await refresh();
   } catch (error) {
     statusBox.textContent = error.message;
   } finally {
     button.disabled = false;
   }
+}
+
+$("#k12-sync").addEventListener("click", async () => {
+  const profileName = profiles.find(profile => profile.id === activeProfileId)?.name ?? "seçili profil";
+  const accepted = confirm(`K12 penceresinde açık öğrencinin en fazla 250 mesaj ve duyurusu “${profileName}” için okunacak. İleti ayrıntıları K12 tarafından “okundu” sayılabilir. Doğru öğrenci açık mı ve devam edilsin mi?`);
+  if (accepted) await runK12Sync(false);
+});
+
+$("#k12-unlink").addEventListener("click", async () => {
+  if (!confirm("Bu profilin K12 öğrenci bağı ve K12'den alınmış mesaj/duyuruları silinsin mi? Manuel eklenen iletiler korunur. Gerekirse önce veriyi dışa aktarın.")) return;
+  const response = await fetch("/api/connectors/k12/link", { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ profileId: activeProfileId, consent: true, deleteImportedMessages: true }) });
+  const result = await response.json();
+  alert(response.ok ? `K12 öğrenci bağı kaldırıldı; ${result.deletedMessages} K12 iletisi silindi.` : result.error);
+  if (response.ok) await refresh();
+  await refreshK12Status();
+});
+
+$("#k12-legacy-cleanup").addEventListener("click", async () => {
+  if (!confirm("v0.2.0'dan kalmış K12 tarayıcı profili ve içindeki oturum çerezleri kalıcı olarak silinsin mi? Önce eski K12 Chrome penceresini kapatın.")) return;
+  const response = await fetch("/api/connectors/k12/legacy-profile", { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ consent: true }) });
+  const result = await response.json();
+  alert(response.ok ? "Eski K12 tarayıcı verileri silindi." : result.error);
+  await refreshK12Status();
 });
 
 $("#import").addEventListener("click", async () => {
@@ -296,6 +313,7 @@ $("#profile-select").addEventListener("change", async event => {
   activeProfileId = Number(event.target.value);
   storageSet("egitim-pusulasi-profile", String(activeProfileId));
   await refresh($("#search").value);
+  await refreshK12Status();
 });
 
 $("#digest-period").addEventListener("change", () => refresh($("#search").value));
@@ -316,12 +334,13 @@ $("#weekly-learning-content").addEventListener("change", async event => {
       body: JSON.stringify({ completed: intended })
     });
     if (!response.ok) throw new Error("Ödev kontrol durumu kaydedilemedi.");
-    await refresh($("#search").value);
   } catch (error) {
     task.checked = !intended;
     task.disabled = false;
     alert(error.message);
+    return;
   }
+  try { await refresh($("#search").value); } catch { task.disabled = false; alert("Durum kaydedildi ancak ekran yenilenemedi. Sayfayı yenileyin."); }
 });
 
 $("#weekly-calendar").addEventListener("click", async () => {

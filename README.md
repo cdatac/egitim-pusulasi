@@ -27,6 +27,8 @@ Ayrıntılı kurulum, güncelleme, yedekleme ve kaldırma adımları için [kuru
 
 Bu pencere rastgele bir localhost portu ve geçici gizli Chrome profili kullanır. Başlatıcı penceresini Chrome kapanana kadar açık bırakın; Chrome kapanınca geçici profil silinir. Parolayı Chrome'a kaydetmeyin. Ayrıntılı adımlar [kullanım kılavuzundadır](docs/USER_GUIDE.md#3-k12-bağlantısı-ve-eşitleme).
 
+v0.2.0 kullandıysanız eski K12 penceresini kapatın ve **Ayarlar → Eski K12 tarayıcı verilerini sil** düğmesini kullanın. Bu işlem yalnızca eski `data/k12-chrome-profile` klasörünü kaldırır. Yanlış öğrenci bağlandıysa aynı ekrandaki **K12 öğrenci bağını kaldır** düğmesiyle yeniden bağlayabilirsiniz; farklı çocukların verileri karışmasın diye bu işlem seçili profilde K12'den alınmış iletileri de siler, manuel kayıtları korur.
+
 ### macOS veya Linux
 
 ```sh

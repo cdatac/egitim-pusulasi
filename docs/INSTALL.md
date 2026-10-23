@@ -23,7 +23,7 @@ Oluşturucu mevcut bir çıktı dizininin üzerine yazmaz; `data/`, Git geçmiş
 
 Windows bilinmeyen bir `.cmd` dosyası için uyarı gösterebilir. Dosya düz metindir; çalıştırmadan önce içeriği bir metin düzenleyicisinde inceleyebilirsiniz. Proje PowerShell çalıştırma politikasını değiştirmez.
 
-K12 eşitlemesi için ayrıca `K12-Baglantisini-Ac.cmd` dosyasına çift tıklayın. Başlatıcı penceresini K12 Chrome penceresi kapanana kadar açık bırakın. Rastgele bir localhost portu ve işletim sisteminin geçici dizininde gizli Chrome profili kullanılır; Chrome kapanınca profil silinir. Parolayı Chrome'a kaydetmeyin. Ayrıntılar [kullanım kılavuzundadır](USER_GUIDE.md#3-k12-bağlantısı-ve-eşitleme).
+K12 eşitlemesi için ayrıca `K12-Baglantisini-Ac.cmd` dosyasına çift tıklayın. Başlatıcı penceresini K12 Chrome penceresi kapanana kadar açık bırakın. Rastgele bir localhost portu ve işletim sisteminin geçici dizininde gizli Chrome profili kullanılır; Chrome kapanınca profil silinir. Parolayı Chrome'a kaydetmeyin. v0.2.0'dan yükseltiyorsanız eski K12 penceresini kapatıp Ayarlar'daki **Eski K12 tarayıcı verilerini sil** düğmesini kullanın; böylece eski `data/k12-chrome-profile` içindeki oturum çerezleri yedeğe taşınmaz. Ayrıntılar [kullanım kılavuzundadır](USER_GUIDE.md#3-k12-bağlantısı-ve-eşitleme).
 
 ## macOS ve Linux
 
@@ -69,7 +69,7 @@ JSON veya `.ics` dosyaları gerçek okul içeriği barındırabilir. Bunları e-
 ## Güncelleme
 
 1. Uygulamayı durdurun.
-2. `data` klasörünün güvenli bir kopyasını alın. Geçici K12 Chrome penceresini önce kapatın; bağlantı dosyası sır içermez ve kapatıldığında silinir.
+2. Geçici K12 Chrome penceresini kapatın. v0.2.0'dan geliyorsanız `data/k12-chrome-profile` klasörünü silin; bu klasörü yedeklemeyin. Ardından kalan `data` klasörünün güvenli bir kopyasını alın.
 3. Yeni sürüm dosyalarını indirin.
 4. Eski `data` klasörünü yeni sürüm klasörüne taşıyın veya `DATA_DIR` ile aynı veri klasörünü seçin.
 5. Başlatıcıyı çalıştırın. Veritabanı geçişleri başlangıçta otomatik uygulanır.

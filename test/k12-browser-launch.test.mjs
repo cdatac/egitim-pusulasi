@@ -1,7 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
-import { chromeCandidates, isSafeK12Url, k12BrowserArgs } from "../scripts/open-k12-browser.mjs";
+import { chromeCandidates, isSafeK12Url, k12BrowserArgs, removeOwnedConnectionFile } from "../scripts/open-k12-browser.mjs";
 
 test("K12 başlatıcısı yalnızca güvenli K12 adreslerini kabul eder", () => {
   assert.equal(isSafeK12Url("https://www.k12net.com/"), true);
@@ -28,4 +31,15 @@ test("Windows Chrome yolları bilinen kullanıcı ve program dizinlerinden üret
   });
   assert.equal(candidates.length, 3);
   assert.match(candidates[0], /Google[\\/]Chrome[\\/]Application[\\/]chrome\.exe$/);
+});
+
+test("yalnızca kendi başlatıcı örneğine ait bağlantı dosyasını siler", async t => {
+  const directory = await mkdtemp(path.join(tmpdir(), "egitim-pusulasi-connection-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const file = path.join(directory, "k12-connection.json");
+  await writeFile(file, JSON.stringify({ instanceId: "ikinci" }), "utf8");
+  assert.equal(await removeOwnedConnectionFile(file, "birinci"), false);
+  assert.equal(existsSync(file), true);
+  assert.equal(await removeOwnedConnectionFile(file, "ikinci"), true);
+  assert.equal(existsSync(file), false);
 });

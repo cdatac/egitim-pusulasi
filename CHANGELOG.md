@@ -1,13 +1,15 @@
 # Değişiklik günlüğü
 
-## 0.2.1 — 2026-10-22
+## 0.2.1 — 2026-10-23
 
 - K12 eşitlemesine süre sınırı, eşzamanlı işlem kilidi, yalnızca yeni/eksik ayrıntıları alma ve öğrenci–profil bağlama koruması eklendi.
 - K12 Chrome bağlantısı rastgele yerel port ve pencere kapanınca silinen geçici profille sınırlandırıldı.
 - Türkçe kazanım algılama, ödev eşleştirme, İstanbul saat dilimi ve geçersiz tarih denetimleri sıkılaştırıldı.
 - Takvim çıktısında kaynaksız son tarih ve yanıltıcı tamamlanma zamanı kaldırıldı.
 - Arayüz hata durumları, klavye erişilebilirliği, yerel depolama ve indirme temizliği sağlamlaştırıldı.
-- Yayın iş akışı yalnızca ana dala birleştirilmiş commit'lerin etiketlenmesine izin verecek biçimde kapatıldı.
+- Güncel yayın iş akışına, etiket commit'inin ana dal geçmişinde olduğunu doğrulayan bir kapı eklendi; depo yöneticileri için etiket ruleset'i ayrıca önerildi.
+
+> **v0.2.0 uyarısı:** Bu sürüm ön sürüme çevrilmiştir. K12 eşitlemesini kullanmayın. Güncellemeden önce eski K12 Chrome penceresini kapatıp `data/k12-chrome-profile` klasörünü silin veya v0.2.1 Ayarlar ekranındaki güvenli temizleme düğmesini kullanın.
 
 ## 0.2.0 — 2026-10-22
 

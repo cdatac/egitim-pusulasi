@@ -2,7 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -43,6 +44,7 @@ async function startServer(extraEnv = {}, preparedDataDir = null) {
 
   return {
     base: `http://127.0.0.1:${port}`,
+    dataDir,
     async close() {
       child.kill("SIGTERM");
       await new Promise(resolve => child.once("exit", resolve));
@@ -421,6 +423,22 @@ test("K12 bağlayıcı sözleşmesi kayıtları içe aktarır, tekrarları ayık
   assert.equal(notification.items[0].bodyComplete, false);
   assert.doesNotMatch(JSON.stringify(notification.items[0]), /saklanmamalı/);
 
+  const previewImport = await fetch(`${app.base}/api/connectors/k12/notifications/import`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ profileId: stored[0].profileId, records: [{ title: "Uzun duyuru", message: "Bu uzun duyurunun ilk yirmi karakterden uzun önizlemesi…", sender: "Okul", receivedAt: "2026-10-22T09:00:00+03:00" }] })
+  }).then(response => response.json());
+  assert.equal(previewImport.imported, 1);
+  const completedPreview = await fetch(`${app.base}/api/connectors/k12/import`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ profileId: stored[0].profileId, records: [{ externalId: "{33333333-3333-3333-3333-333333333333}", title: "Uzun duyuru", body: "Bu uzun duyurunun ilk yirmi karakterden uzun önizlemesi ve tam metnin devamı.", sender: "Okul", occurredAt: "2026-10-22T08:30:00+03:00", bodyComplete: true }] })
+  }).then(response => response.json());
+  assert.equal(completedPreview.imported, 1);
+  const afterReconcile = await fetch(`${app.base}/api/messages`).then(response => response.json());
+  assert.equal(afterReconcile.filter(item => item.title === "Uzun duyuru").length, 1);
+  assert.equal(afterReconcile.find(item => item.title === "Uzun duyuru").bodyComplete, true);
+
   const deniedSync = await fetch(`${app.base}/api/connectors/k12/sync`, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -435,6 +453,26 @@ test("K12 bağlayıcı sözleşmesi kayıtları içe aktarır, tekrarları ayık
   });
   assert.equal(unavailableSync.status, 400);
   assert.equal((await unavailableSync.json()).code, "cdp_unavailable");
+
+  const unlinkDenied = await fetch(`${app.base}/api/connectors/k12/link`, {
+    method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ profileId: stored[0].profileId, consent: false })
+  });
+  assert.equal(unlinkDenied.status, 400);
+  const unlinked = await fetch(`${app.base}/api/connectors/k12/link`, {
+    method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ profileId: stored[0].profileId, consent: true, deleteImportedMessages: true })
+  }).then(response => response.json());
+  assert.equal(unlinked.removed, 0);
+  assert.equal(unlinked.deletedMessages, 4);
+
+  const legacyDirectory = path.join(app.dataDir, "k12-chrome-profile");
+  await mkdir(legacyDirectory, { recursive: true });
+  const statusWithLegacy = await fetch(`${app.base}/api/connectors/k12/status?profileId=${stored[0].profileId}`).then(response => response.json());
+  assert.equal(statusWithLegacy.legacyProfileDetected, true);
+  const cleaned = await fetch(`${app.base}/api/connectors/k12/legacy-profile`, {
+    method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ consent: true })
+  }).then(response => response.json());
+  assert.equal(cleaned.removed, true);
+  assert.equal(existsSync(legacyDirectory), false);
 });
 
 test("birden fazla çocuk profilini birbirinden ayırır", async t => {
@@ -543,6 +581,7 @@ test("eski tek-profilli veritabanını veri kaybetmeden yükseltir", async t => 
       provider TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
     INSERT INTO messages(source, external_id, title, body) VALUES ('manual', 'legacy-1', 'Eski ileti', 'Korunacak içerik');
+    INSERT INTO messages(source, external_id, title, body) VALUES ('connector:k12', '1:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'Eksik K12', 'Eksik K12');
   `);
   legacy.close();
 
@@ -551,9 +590,11 @@ test("eski tek-profilli veritabanını veri kaybetmeden yükseltir", async t => 
   const profiles = await fetch(`${app.base}/api/profiles`).then(response => response.json());
   const messages = await fetch(`${app.base}/api/messages?profileId=${profiles[0].id}`).then(response => response.json());
   assert.equal(profiles.length, 1);
-  assert.equal(messages.length, 1);
-  assert.equal(messages[0].title, "Eski ileti");
-  assert.equal(messages[0].externalId, "legacy-1");
-  assert.equal(messages[0].profileId, profiles[0].id);
+  assert.equal(messages.length, 2);
+  const manual = messages.find(item => item.title === "Eski ileti");
+  const legacyK12 = messages.find(item => item.title === "Eksik K12");
+  assert.equal(manual.externalId, "legacy-1");
+  assert.equal(manual.profileId, profiles[0].id);
+  assert.equal(legacyK12.bodyComplete, false);
   assert.equal((await fetch(`${app.base}/api/setup`).then(response => response.json())).completed, true);
 });

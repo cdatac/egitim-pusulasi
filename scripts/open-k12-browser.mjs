@@ -1,7 +1,8 @@
 import { spawn, spawnSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { once } from "node:events";
 import { existsSync } from "node:fs";
-import { chmod, mkdir, mkdtemp, rm, unlink, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, rm, unlink, writeFile } from "node:fs/promises";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -78,6 +79,17 @@ async function waitForChrome(port, child, attempts = 60) {
   throw new Error("Chrome güvenli bağlantı noktası zamanında hazır olmadı");
 }
 
+export async function removeOwnedConnectionFile(connectionFile, instanceId) {
+  try {
+    const current = JSON.parse(await readFile(connectionFile, "utf8"));
+    if (current.instanceId !== instanceId) return false;
+    await unlink(connectionFile);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function main() {
   const chrome = findChrome(process.platform);
   if (!chrome) throw new Error("Google Chrome bulunamadı. Chrome'u kurup bu başlatıcıyı yeniden çalıştırın.");
@@ -87,13 +99,16 @@ async function main() {
   const profileDirectory = await mkdtemp(path.join(os.tmpdir(), "egitim-pusulasi-k12-"));
   const dataDirectory = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(ROOT, "data");
   const connectionFile = path.join(dataDirectory, "k12-connection.json");
+  const legacyProfile = path.join(dataDirectory, "k12-chrome-profile");
+  const instanceId = randomUUID();
   await mkdir(dataDirectory, { recursive: true });
+  if (existsSync(legacyProfile)) console.warn("UYARI: v0.2.0'dan kalmış K12 tarayıcı verileri bulundu. Eğitim Pusulası > Ayarlar bölümünden bunları silin.");
   const child = spawn(chrome, k12BrowserArgs({ profileDirectory, port, url }), { stdio: "ignore", windowsHide: false });
   let ready = false;
   try {
     await waitForChrome(port, child);
     ready = true;
-    await writeFile(connectionFile, `${JSON.stringify({ port, pid: child.pid, createdAt: new Date().toISOString() })}\n`, { encoding: "utf8", mode: 0o600 });
+    await writeFile(connectionFile, `${JSON.stringify({ instanceId, port, pid: child.pid, createdAt: new Date().toISOString() })}\n`, { encoding: "utf8", mode: 0o600 });
     try { await chmod(connectionFile, 0o600); } catch { /* Windows izinleri işletim sistemi hesabıyla sınırlıdır */ }
     console.log("K12 bağlantı penceresi hazır. Bu geçici Chrome penceresinde veli hesabınıza giriş yapın.");
     console.log("Parola kaydetmeyin. Pencere kapanınca geçici profil ve bağlantı bilgisi silinir.");
@@ -101,7 +116,7 @@ async function main() {
     await once(child, "exit");
   } finally {
     if (!ready && child.exitCode === null) child.kill();
-    try { await unlink(connectionFile); } catch { /* zaten kaldırılmış olabilir */ }
+    await removeOwnedConnectionFile(connectionFile, instanceId);
     await rm(profileDirectory, { recursive: true, force: true, maxRetries: 4, retryDelay: 250 });
   }
 }
